@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is part of KwaiShopSDK.
+ *
+ * @link     https://github.com/westng/kwaishop-php-sdk
+ * @document https://github.com/westng/kwaishop-php-sdk
+ * @contact  westng
+ * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
+ */
+
+namespace KwaiShopSDK\Api\Item;
+
+use KwaiShopSDK\Core\RpcRequest;
+
+/**
+ * 标品信息查询（新）
+ * 更新时间: 2025-06-20 17:08:13
+ * 查询标品的属性信息、标品ID、类目ID和类目路径信息
+ */
+final class OpenItemCategoryStandardSearchSpu extends RpcRequest
+{
+    protected string $apiMethod = 'open.item.category.standard.search.spu';
+
+    protected string $httpMethod = 'GET';
+
+    protected string $version = '1';
+
+    protected string $contentType = 'application/json';
+}

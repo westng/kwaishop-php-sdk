@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is part of KwaiShopSDK.
+ *
+ * @link     https://github.com/westng/kwaishop-php-sdk
+ * @document https://github.com/westng/kwaishop-php-sdk
+ * @contact  westng
+ * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
+ */
+
+namespace KwaiShopSDK\Api\Distribution;
+
+use KwaiShopSDK\Core\RpcRequest;
+
+/**
+ * 获取站外分销专题列表
+ * 更新时间: 2021-12-30 16:04:01
+ * 平台运营人员根据专题模块属性不同，人工招商后，配置的商品
+ */
+final class OpenDistributionCpsPromotionThemeEntranceList extends RpcRequest
+{
+    protected string $apiMethod = 'open.distribution.cps.promotion.theme.entrance.list';
+
+    protected string $httpMethod = 'GET';
+
+    protected string $version = '1';
+
+    protected string $contentType = 'application/json';
+}

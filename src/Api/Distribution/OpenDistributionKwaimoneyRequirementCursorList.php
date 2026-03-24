@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is part of KwaiShopSDK.
+ *
+ * @link     https://github.com/westng/kwaishop-php-sdk
+ * @document https://github.com/westng/kwaishop-php-sdk
+ * @contact  westng
+ * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
+ */
+
+namespace KwaiShopSDK\Api\Distribution;
+
+use KwaiShopSDK\Core\RpcRequest;
+
+/**
+ * 单个达人的站外推广需求列表
+ * 更新时间: 2022-02-16 10:30:44
+ * 获取单个达人的站外推广需求列表，两种用法： 1.queryBeginTime和queryEndTime置空，查询当前生效的需求。注意，在分页请求场景下每个分页请求对“当前”的定义不一定一致。 2.若queryBeginTime为空，则查询queryEndTime时生效的需求。若queryBeginT...
+ */
+final class OpenDistributionKwaimoneyRequirementCursorList extends RpcRequest
+{
+    protected string $apiMethod = 'open.distribution.kwaimoney.requirement.cursor.list';
+
+    protected string $httpMethod = 'GET';
+
+    protected string $version = '1';
+
+    protected string $contentType = 'application/json';
+}
