@@ -36,6 +36,55 @@
 - 提供 `rawRequest()` 作为网关兜底调用能力
 - 提供 PHPUnit 测试底座与本地手动调试脚本
 
+## SDK 目录
+
+```text
+src/
+├── Api/                    # 按官方文档分类组织的接口封装
+│   ├── Comment/            # 评价 API
+│   ├── Cs/                 # 客服 / 会话 API
+│   ├── Distribution/       # 分销 / 招商 / CPS API
+│   ├── Dropshipping/       # 代打代发 API
+│   ├── Express/            # 电子面单 / 打印 API
+│   ├── Funds/              # 资金 / 对账 / 提现 API
+│   ├── Industry/           # 行业能力 API
+│   ├── Invoice/            # 发票 API
+│   ├── Item/               # 商品 API
+│   ├── Live/               # 直播场景 API
+│   ├── Logistics/          # 地址 / 运费模板 / 物流 API
+│   ├── Member/             # 会员 API
+│   ├── MerchantMember/     # 商家会员 API
+│   ├── Order/              # 订单 API
+│   ├── Photo/              # 图文 / 图片素材 API
+│   ├── Promotion/          # 营销 API
+│   ├── Refund/             # 售后 / 退款 API
+│   ├── Scm/                # 供应链 / 库存 / 仓储 API
+│   ├── Security/           # 安全日志 / 解密 API
+│   ├── ServiceMarket/      # 服务市场 API
+│   ├── Shop/               # 店铺 API
+│   ├── Sms/                # 短信 API
+│   ├── Tool/               # 工具类开放能力 API
+│   ├── User/               # 用户 / 商家信息 API
+│   └── Virtual/            # 虚拟商品 API
+├── Core/                   # SDK 核心基础设施
+│   ├── Auth/               # OAuth 鉴权与 Token 对象
+│   ├── Http/               # HTTP 传输抽象与 Guzzle 实现
+│   ├── Pipeline/           # 请求构建与响应解析流水线
+│   ├── Profile/            # 配置对象与运行参数
+│   ├── Runtime/            # FPM / CLI / Swoole 运行时识别
+│   └── Signing/            # MD5 / HMAC_SHA256 签名实现
+├── Exception/              # SDK 异常体系
+├── Support/                # 通用辅助工具
+└── KwaiShopClient.php      # SDK 主客户端入口
+```
+
+说明：
+
+- 每个官方接口对应一个独立类文件，避免资源聚合层带来的职责混乱
+- `Api/*` 目录名尽量与官方文档分类保持一致，方便检索与对照文档
+- `Core/*` 只保留 SDK 基础能力，不承担具体业务接口职责
+- 新接口优先补到对应分类目录，而不是继续堆到通用文件里
+
 ## 安装
 
 ```bash

@@ -36,6 +36,55 @@ Official docs:
 - Low-level `rawRequest()` fallback for gateway calls
 - PHPUnit test foundation and manual debug scripts
 
+## SDK Structure
+
+```text
+src/
+├── Api/                    # Endpoint wrappers organized by official documentation category
+│   ├── Comment/            # Comment APIs
+│   ├── Cs/                 # Customer service / session APIs
+│   ├── Distribution/       # Distribution / investment / CPS APIs
+│   ├── Dropshipping/       # Dropshipping APIs
+│   ├── Express/            # E-bill / printing APIs
+│   ├── Funds/              # Funds / settlement / withdrawal APIs
+│   ├── Industry/           # Industry-specific APIs
+│   ├── Invoice/            # Invoice APIs
+│   ├── Item/               # Item APIs
+│   ├── Live/               # Live-commerce APIs
+│   ├── Logistics/          # Address / freight template / logistics APIs
+│   ├── Member/             # Member APIs
+│   ├── MerchantMember/     # Merchant member APIs
+│   ├── Order/              # Order APIs
+│   ├── Photo/              # Photo / media APIs
+│   ├── Promotion/          # Promotion APIs
+│   ├── Refund/             # Refund / after-sale APIs
+│   ├── Scm/                # Supply chain / inventory / warehouse APIs
+│   ├── Security/           # Security log / decrypt APIs
+│   ├── ServiceMarket/      # Service market APIs
+│   ├── Shop/               # Shop APIs
+│   ├── Sms/                # SMS APIs
+│   ├── Tool/               # Tooling capability APIs
+│   ├── User/               # User / seller info APIs
+│   └── Virtual/            # Virtual goods APIs
+├── Core/                   # SDK core infrastructure
+│   ├── Auth/               # OAuth and token objects
+│   ├── Http/               # HTTP transport abstraction and Guzzle implementation
+│   ├── Pipeline/           # Request building and response parsing pipeline
+│   ├── Profile/            # Config objects and runtime options
+│   ├── Runtime/            # FPM / CLI / Swoole runtime detection
+│   └── Signing/            # MD5 / HMAC_SHA256 signing implementations
+├── Exception/              # SDK exception hierarchy
+├── Support/                # Shared utility helpers
+└── KwaiShopClient.php      # Main SDK client entry point
+```
+
+Notes:
+
+- Each official endpoint is mapped to its own dedicated class file
+- `Api/*` folder names stay aligned with the official documentation categories whenever possible
+- `Core/*` only contains foundational SDK concerns, not business endpoint logic
+- New endpoints should be added to the matching category folder instead of generic catch-all files
+
 ## Installation
 
 ```bash
