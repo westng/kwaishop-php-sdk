@@ -221,6 +221,8 @@ Start by checking the matching category under `src/Api/*`. Class names usually s
 - When adding a new endpoint, place it under the matching official documentation category in `src/Api/*`
 - Keep naming, directory structure, and SDK style consistent with the existing project
 - If your change affects behavior, update the related tests and README documentation together
+- Before submitting, run at least the tests related to your change to avoid shipping obviously broken updates
+- Check code style before submitting, and run `composer cs-check` or `composer cs-fix` when needed
 
 ### Commit Convention
 
@@ -235,8 +237,54 @@ Start by checking the matching category under `src/Api/*`. Class names usually s
 - The Pull Request title should clearly describe the change and should stay aligned with the main commit whenever possible
 - The Pull Request description should explain the purpose, key changes, affected scope, and whether there is any compatibility impact
 - If the Pull Request includes new endpoints, behavior changes, or documentation updates, update the related tests or README content together
+- The Pull Request description should ideally mention what tests were run and whether code style checks were performed
 - Keep one Pull Request focused on one class of change instead of merging unrelated requirements together
 - Before opening a Pull Request, do a basic self-check on code style, naming, directory placement, and general usability
+
+## Run Tests
+
+Test directories:
+
+- `tests/Unit`: unit tests
+- `tests/Integration`: integration tests
+- `tests/Functional`: functional tests / local debugging scripts
+
+Run the default suite:
+
+```bash
+composer test
+```
+
+Run unit tests:
+
+```bash
+./vendor/bin/phpunit --testsuite unit
+```
+
+Run integration tests:
+
+```bash
+./vendor/bin/phpunit --testsuite integration
+```
+
+Run functional tests:
+
+```bash
+./vendor/bin/phpunit --testsuite functional
+```
+
+Run a specific test:
+
+```bash
+./vendor/bin/phpunit --filter OpenShopInfoGetTest
+```
+
+Code style checks:
+
+```bash
+composer cs-check
+composer cs-fix
+```
 
 ## License
 

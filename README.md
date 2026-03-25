@@ -221,6 +221,8 @@ SDK 当前提供的 OAuth 能力包括：
 - 新增接口时，请按官方文档分类放入对应 `src/Api/*` 目录
 - 提交代码时请保持命名、目录结构和现有 SDK 风格一致
 - 涉及行为变更时，请同步补充或更新测试与 README 文档
+- 提交前请至少执行与本次改动相关的测试，避免提交明显不可用的变更
+- 提交前请检查代码风格，必要时执行 `composer cs-check` 或 `composer cs-fix`
 
 ### 提交规范
 
@@ -235,8 +237,54 @@ SDK 当前提供的 OAuth 能力包括：
 - Pull Request 标题请清楚说明本次变更主题，并尽量与主要 Commit 保持一致
 - Pull Request 内容请说明变更目的、核心改动、影响范围，以及是否存在兼容性影响
 - 如果 Pull Request 涉及新接口、行为调整或文档变化，请同步更新对应测试或 README 内容
+- Pull Request 描述中建议说明已执行的测试范围，以及是否执行了代码风格检查
 - 一个 Pull Request 只解决一类问题，避免把多个不相关需求合并提交
 - 提交 Pull Request 前请先自查代码风格、命名、目录归类和基础可用性
+
+## 运行测试
+
+测试目录说明：
+
+- `tests/Unit`：单元测试
+- `tests/Integration`：集成测试
+- `tests/Functional`：功能测试 / 本地联调脚本
+
+运行默认测试集：
+
+```bash
+composer test
+```
+
+运行单元测试：
+
+```bash
+./vendor/bin/phpunit --testsuite unit
+```
+
+运行集成测试：
+
+```bash
+./vendor/bin/phpunit --testsuite integration
+```
+
+运行功能测试：
+
+```bash
+./vendor/bin/phpunit --testsuite functional
+```
+
+运行指定测试：
+
+```bash
+./vendor/bin/phpunit --filter OpenShopInfoGetTest
+```
+
+代码风格检查：
+
+```bash
+composer cs-check
+composer cs-fix
+```
 
 ## 开源协议
 
