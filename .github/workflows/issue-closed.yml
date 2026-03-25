@@ -1,0 +1,50 @@
+name: Issue Closed
+
+on:
+  issues:
+    types:
+      - closed
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  thank:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Thank User On Close
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const config = JSON.parse(fs.readFileSync('.github/issue-bot/messages.json', 'utf8'));
+            const issue = context.payload.issue;
+
+            if (issue.pull_request) {
+              core.info('Skip pull request payload.');
+              return;
+            }
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              per_page: 100,
+            });
+
+            if (comments.some((comment) => (comment.body || '').includes(config.markers.closedThanks))) {
+              core.info('Close-thanks comment already exists.');
+              return;
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: `${config.markers.closedThanks}\n${config.closedThanks}`,
+            });

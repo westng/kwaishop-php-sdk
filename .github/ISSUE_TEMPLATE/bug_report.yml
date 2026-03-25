@@ -1,0 +1,62 @@
+name: Bug 反馈
+description: 提交一个可复现的问题，帮助尽快定位
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: input
+    id: sdk_version
+    attributes:
+      label: SDK 版本
+      description: 例如 `1.0.0`
+      placeholder: 请输入当前使用的 SDK 版本
+    validations:
+      required: true
+  - type: input
+    id: php_version
+    attributes:
+      label: PHP 版本
+      description: 例如 `8.1.31`
+      placeholder: 请输入当前使用的 PHP 版本
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce_steps
+    attributes:
+      label: 复现步骤
+      description: 请尽量给出最小可复现步骤
+      placeholder: |
+        1. 初始化客户端
+        2. 调用某个接口
+        3. 观察到异常
+    validations:
+      required: true
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: 预期结果
+      placeholder: 请描述你期望出现的结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: 实际结果
+      placeholder: 请描述当前实际出现的结果或异常现象
+    validations:
+      required: true
+  - type: textarea
+    id: error_output
+    attributes:
+      label: 报错信息或异常堆栈
+      description: 建议贴出关键日志、异常堆栈或接口响应
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: extra_context
+    attributes:
+      label: 补充信息
+      description: 可选，补充运行环境、依赖版本、截图等
+    validations:
+      required: false

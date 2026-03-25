@@ -1,0 +1,34 @@
+name: 功能建议
+description: 提交新的功能需求、接口补充或结构改进建议
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 你想解决什么问题
+      placeholder: 请描述当前的痛点或限制
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你的建议方案
+      placeholder: 请描述你希望新增或调整的能力
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: 使用场景
+      placeholder: 请描述真实的业务或开发场景
+    validations:
+      required: true
+  - type: textarea
+    id: extra_context
+    attributes:
+      label: 补充信息
+      placeholder: 可以补充相关接口文档、示例、对兼容性的考虑等
+    validations:
+      required: false

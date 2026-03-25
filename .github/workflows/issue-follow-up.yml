@@ -1,0 +1,105 @@
+name: Issue Follow Up
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  follow-up:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Follow Up Open Issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const config = JSON.parse(fs.readFileSync('.github/issue-bot/messages.json', 'utf8'));
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const now = Date.now();
+            const ignoreLabels = new Set(config.followUp.ignoreLabels.map((label) => label.toLowerCase()));
+            const botMarkers = new Set(Object.values(config.markers));
+
+            for (const issue of openIssues) {
+              if (issue.pull_request) {
+                continue;
+              }
+
+              const labels = (issue.labels || []).map((label) => {
+                if (typeof label === 'string') {
+                  return label.toLowerCase();
+                }
+
+                return String(label.name || '').toLowerCase();
+              });
+
+              if (labels.some((label) => ignoreLabels.has(label))) {
+                core.info(`Skip issue #${issue.number} because of ignore label.`);
+                continue;
+              }
+
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                per_page: 100,
+              });
+
+              const hasFirst = comments.some((comment) => (comment.body || '').includes(config.markers.followUpFirst));
+              const hasSecond = comments.some((comment) => (comment.body || '').includes(config.markers.followUpSecond));
+              const lastHumanActivityAt = comments
+                .filter((comment) => {
+                  const body = comment.body || '';
+                  const isBotComment = Array.from(botMarkers).some((marker) => body.includes(marker));
+                  const isActionsBot = String(comment.user?.login || '').toLowerCase() === 'github-actions[bot]';
+
+                  return !isBotComment && !isActionsBot;
+                })
+                .reduce((latest, comment) => {
+                  const createdAt = new Date(comment.created_at).getTime();
+
+                  return Math.max(latest, createdAt);
+                }, new Date(issue.created_at).getTime());
+              const staleDays = Math.floor((now - lastHumanActivityAt) / 86400000);
+
+              if (staleDays < config.followUp.firstAfterDays) {
+                continue;
+              }
+
+              if (staleDays >= config.followUp.secondAfterDays && !hasSecond) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `${config.markers.followUpSecond}\n${config.followUp.secondComment}`,
+                });
+
+                core.info(`Posted second follow-up on issue #${issue.number}.`);
+                continue;
+              }
+
+              if (!hasFirst) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `${config.markers.followUpFirst}\n${config.followUp.firstComment}`,
+                });
+
+                core.info(`Posted first follow-up on issue #${issue.number}.`);
+              }
+            }

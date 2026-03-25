@@ -1,0 +1,35 @@
+name: 使用问题
+description: 提交接入、调用、用法相关的问题
+title: "[Question]: "
+labels:
+  - question
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: 问题描述
+      placeholder: 请清楚描述你遇到的问题
+    validations:
+      required: true
+  - type: textarea
+    id: current_code
+    attributes:
+      label: 当前调用方式
+      description: 建议贴出最小相关代码
+      render: php
+    validations:
+      required: false
+  - type: textarea
+    id: expected
+    attributes:
+      label: 你期望得到什么帮助
+      placeholder: 例如定位报错原因、确认某个接口的正确用法等
+    validations:
+      required: true
+  - type: textarea
+    id: extra_context
+    attributes:
+      label: 补充信息
+      placeholder: 可补充版本信息、接口名、返回内容等
+    validations:
+      required: false

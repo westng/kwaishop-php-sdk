@@ -1,0 +1,82 @@
+name: Issue Opened
+
+on:
+  issues:
+    types:
+      - opened
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Welcome And Check Missing Info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const config = JSON.parse(fs.readFileSync('.github/issue-bot/messages.json', 'utf8'));
+            const issue = context.payload.issue;
+
+            if (issue.pull_request) {
+              core.info('Skip pull request payload.');
+              return;
+            }
+
+            const issueBody = (issue.body || '').toLowerCase();
+            const title = (issue.title || '').toLowerCase();
+            const labels = (issue.labels || []).map((label) => {
+              if (typeof label === 'string') {
+                return label.toLowerCase();
+              }
+
+              return String(label.name || '').toLowerCase();
+            });
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: config.welcome,
+            });
+
+            const isLikelyBug = config.missingInfo.titleHintKeywords.some((keyword) => title.includes(keyword))
+              || config.missingInfo.bodyHintKeywords.some((keyword) => issueBody.includes(keyword))
+              || labels.includes('bug');
+
+            if (!isLikelyBug) {
+              core.info('Skip missing-info reminder for non-bug-like issue.');
+              return;
+            }
+
+            const missingItems = config.missingInfo.checks
+              .filter((check) => !check.patterns.some((pattern) => issueBody.includes(pattern.toLowerCase())))
+              .map((check) => `- ${check.name}`);
+
+            if (missingItems.length === 0) {
+              core.info('Issue body already contains required hints.');
+              return;
+            }
+
+            const commentBody = [
+              config.markers.missingInfo,
+              config.missingInfo.commentPrefix,
+              '',
+              ...missingItems,
+              '',
+              config.missingInfo.commentSuffix,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: commentBody,
+            });
