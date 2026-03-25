@@ -60,6 +60,58 @@ final class KwaiShopClientRawRequestTest extends TestCase
         self::assertSame('demo.txt', $filePart['filename']);
     }
 
+    public function testRawRequestPassesTransportOptionsToGetRequests(): void
+    {
+        $transport = new FakeTransport();
+        $client = new KwaiShopClient($this->makeConfig(), $transport);
+
+        $client->rawRequest(
+            'open.shop.info.get',
+            [],
+            'token',
+            '1',
+            'GET',
+            'application/x-www-form-urlencoded',
+            [
+                'timeout' => 3.5,
+                'connect_timeout' => 1.2,
+                'debug' => true,
+                'headers' => [
+                    'X-Test' => '1',
+                ],
+            ]
+        );
+
+        self::assertSame(3.5, $transport->requests[0]['options']['timeout']);
+        self::assertSame(1.2, $transport->requests[0]['options']['connect_timeout']);
+        self::assertTrue($transport->requests[0]['options']['debug']);
+        self::assertSame('1', $transport->requests[0]['options']['headers']['X-Test']);
+        self::assertSame('open.shop.info.get', $transport->requests[0]['options']['query']['method']);
+    }
+
+    public function testRawRequestTreatsJsonContentTypeWithCharsetAsJson(): void
+    {
+        $transport = new FakeTransport();
+        $client = new KwaiShopClient($this->makeConfig(), $transport);
+
+        $client->rawRequest(
+            'open.demo.json',
+            ['foo' => 'bar'],
+            'token',
+            '1',
+            'POST',
+            'application/json; charset=utf-8',
+            [
+                'timeout' => 2.5,
+            ]
+        );
+
+        self::assertSame(2.5, $transport->requests[0]['options']['timeout']);
+        self::assertSame('open.demo.json', $transport->requests[0]['options']['json']['method']);
+        self::assertStringContainsString('"foo":"bar"', (string) $transport->requests[0]['options']['json']['param']);
+        self::assertArrayNotHasKey('form_params', $transport->requests[0]['options']);
+    }
+
     private function makeConfig(): Config
     {
         return new Config(

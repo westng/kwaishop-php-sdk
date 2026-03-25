@@ -22,10 +22,17 @@ use KwaiShopSDK\Support\Json;
 
 final class RequestFactory
 {
+    private readonly SignerInterface $resolvedSigner;
+
     public function __construct(
         private readonly Config $config,
-        private readonly ?SignerInterface $signer = null,
+        ?SignerInterface $signer = null,
     ) {
+        $this->resolvedSigner = $signer ?? (
+            $this->config->signMethod() === Config::SIGN_METHOD_MD5
+                ? new Md5Signer()
+                : new HmacSha256Signer()
+        );
     }
 
     /**
@@ -35,6 +42,7 @@ final class RequestFactory
      */
     public function build(string $method, array $params, ?string $accessToken = null, string $version = '1'): array
     {
+        $signer = $this->signer();
         $publicParams = [
             'appkey' => $this->config->appKey(),
             'method' => $method,
@@ -42,25 +50,24 @@ final class RequestFactory
             'param' => Json::encode($params),
             'access_token' => $accessToken,
             'timestamp' => Clock::currentMilliseconds(),
-            'signMethod' => $this->signer()->name(),
+            'signMethod' => $signer->name(),
         ];
 
-        $publicParams['sign'] = $this->signer()->sign($publicParams, $this->config->signSecret());
+        $publicParams['sign'] = $signer->sign($publicParams, $this->config->signSecret());
 
         return [
-            'url' => $this->config->baseUrl(),
+            'url' => $this->buildApiUrl($method),
             'params' => $publicParams,
         ];
     }
 
+    private function buildApiUrl(string $method): string
+    {
+        return rtrim($this->config->baseUrl(), '/') . '/' . str_replace('.', '/', ltrim($method, '/'));
+    }
+
     private function signer(): SignerInterface
     {
-        if ($this->signer !== null) {
-            return $this->signer;
-        }
-
-        return $this->config->signMethod() === Config::SIGN_METHOD_MD5
-            ? new Md5Signer()
-            : new HmacSha256Signer();
+        return $this->resolvedSigner;
     }
 }

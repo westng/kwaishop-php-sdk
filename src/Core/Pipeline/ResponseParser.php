@@ -30,13 +30,23 @@ final class ResponseParser
      */
     public function parse(int $httpStatus, string $body): array
     {
-        if ($httpStatus < 200 || $httpStatus >= 300) {
-            throw new TransportException(sprintf('Unexpected HTTP status %d.', $httpStatus));
-        }
-
-        $payload = Json::decode($body);
+        $payload = $this->decodePayload($httpStatus, $body);
         $primaryCode = $this->primaryCode($payload);
         $secondaryCode = $this->secondaryCode($payload);
+
+        if ($httpStatus < 200 || $httpStatus >= 300) {
+            if ($primaryCode !== null && !$this->isSuccess($primaryCode)) {
+                $message = (string) Arr::first($payload, ['error_msg', 'msg', 'message', 'error'], 'Open platform request failed.');
+
+                throw $this->mapException($message, $primaryCode, $secondaryCode, $payload, $body);
+            }
+
+            throw new TransportException(
+                sprintf('Unexpected HTTP status %d.', $httpStatus),
+                $httpStatus,
+                rawResponseBody: $body
+            );
+        }
 
         if ($primaryCode === null) {
             throw new ValidationException('Missing response status field in gateway response.');
@@ -48,7 +58,7 @@ final class ResponseParser
 
         $message = (string) Arr::first($payload, ['error_msg', 'msg', 'message', 'error'], 'Open platform request failed.');
 
-        throw $this->mapException($message, $primaryCode, $secondaryCode, $payload);
+        throw $this->mapException($message, $primaryCode, $secondaryCode, $payload, $body);
     }
 
     /**
@@ -87,14 +97,35 @@ final class ResponseParser
     /**
      * @param array<string, mixed> $payload
      */
-    private function mapException(string $message, ?int $primaryCode, ?int $secondaryCode, array $payload): BusinessException
+    private function mapException(string $message, ?int $primaryCode, ?int $secondaryCode, array $payload, string $rawResponseBody): BusinessException
     {
         return match ($primaryCode) {
-            21, 24 => new AuthenticationException($message, $primaryCode, $secondaryCode, $payload),
-            22, 25, 26 => new AuthorizationException($message, $primaryCode, $secondaryCode, $payload),
-            27, 28 => new SignatureException($message, $primaryCode, $secondaryCode, $payload),
-            15, 16, 17, 1016, 1017, 802000 => new RateLimitException($message, $primaryCode, $secondaryCode, $payload),
-            default => new BusinessException($message, $primaryCode, $secondaryCode, $payload),
+            21, 24 => new AuthenticationException($message, $primaryCode, $secondaryCode, $payload, $rawResponseBody),
+            22, 25, 26 => new AuthorizationException($message, $primaryCode, $secondaryCode, $payload, $rawResponseBody),
+            27, 28 => new SignatureException($message, $primaryCode, $secondaryCode, $payload, $rawResponseBody),
+            15, 16, 17, 1016, 1017, 802000 => new RateLimitException($message, $primaryCode, $secondaryCode, $payload, $rawResponseBody),
+            default => new BusinessException($message, $primaryCode, $secondaryCode, $payload, $rawResponseBody),
         };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodePayload(int $httpStatus, string $body): array
+    {
+        try {
+            return Json::decode($body);
+        } catch (ValidationException $exception) {
+            if ($httpStatus < 200 || $httpStatus >= 300) {
+                throw new TransportException(
+                    sprintf('Unexpected HTTP status %d.', $httpStatus),
+                    $httpStatus,
+                    $exception,
+                    $body
+                );
+            }
+
+            throw $exception;
+        }
     }
 }

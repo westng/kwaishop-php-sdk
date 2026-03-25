@@ -16,6 +16,7 @@ namespace KwaiShopSDK\Core\Auth;
 use KwaiShopSDK\Core\Http\TransportInterface;
 use KwaiShopSDK\Core\Pipeline\ResponseParser;
 use KwaiShopSDK\Core\Profile\Config;
+use KwaiShopSDK\Exception\ValidationException;
 use KwaiShopSDK\Support\Arr;
 
 final class OAuthClient
@@ -96,8 +97,13 @@ final class OAuthClient
             $scopes = $scopes === '' ? [] : explode(',', $scopes);
         }
 
+        $accessToken = trim((string) Arr::first($payload, ['access_token'], ''));
+        if ($accessToken === '') {
+            throw new ValidationException('Missing access_token in OAuth response.');
+        }
+
         return new TokenResponse(
-            accessToken: (string) Arr::first($payload, ['access_token'], ''),
+            accessToken: $accessToken,
             refreshToken: Arr::first($payload, ['refresh_token']),
             openId: Arr::first($payload, ['open_id']),
             expiresIn: ($expires = Arr::first($payload, ['expires_in'])) !== null ? (int) $expires : null,

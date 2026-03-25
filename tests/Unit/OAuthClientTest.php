@@ -16,6 +16,7 @@ namespace KwaiShopSDK\Tests\Unit;
 use KwaiShopSDK\Core\Auth\OAuthClient;
 use KwaiShopSDK\Core\Pipeline\ResponseParser;
 use KwaiShopSDK\Core\Profile\Config;
+use KwaiShopSDK\Exception\ValidationException;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
 use PHPUnit\Framework\TestCase;
 
@@ -62,5 +63,27 @@ final class OAuthClientTest extends TestCase
         self::assertSame('ks123', $transport->requests[0]['options']['form_params']['app_id']);
         self::assertSame('code', $transport->requests[0]['options']['form_params']['grant_type']);
         self::assertSame('grant-code', $transport->requests[0]['options']['form_params']['code']);
+    }
+
+    public function testGetAccessTokenRejectsSuccessfulPayloadWithoutAccessToken(): void
+    {
+        $transport = new FakeTransport([
+            [
+                'status' => 200,
+                'headers' => [],
+                'body' => '{"result":1,"refresh_token":"rt"}',
+            ],
+        ]);
+
+        $client = new OAuthClient(
+            new Config('ks123', 'app-secret', 'sign-secret'),
+            $transport,
+            new ResponseParser()
+        );
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Missing access_token in OAuth response.');
+
+        $client->getAccessToken('grant-code');
     }
 }

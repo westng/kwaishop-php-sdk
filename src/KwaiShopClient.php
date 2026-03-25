@@ -27,23 +27,57 @@ use KwaiShopSDK\Exception\ValidationException;
 
 final class KwaiShopClient
 {
+    use ApiClientMethods;
+
     /**
      * @var array<string, class-string<RpcRequest>|null>
      */
     private static array $apiClassMap = [];
 
+    private readonly Config $config;
     private readonly TransportInterface $transport;
     private readonly RequestFactory $requestFactory;
     private readonly ResponseParser $responseParser;
     private readonly OAuthClient $oauthClient;
 
     public function __construct(
-        private readonly Config $config,
-        ?TransportInterface $transport = null,
-        ?ClientInterface $httpClient = null,
-        ?RequestFactory $requestFactory = null,
-        ?ResponseParser $responseParser = null,
+        Config|string $appKey,
+        mixed $appSecret = null,
+        mixed $signSecret = null,
+        mixed $accessToken = null,
+        mixed $baseUrl = null,
+        mixed $transport = null,
+        mixed $httpClient = null,
+        mixed $requestFactory = null,
+        mixed $responseParser = null,
     ) {
+        [
+            'config' => $config,
+            'transport' => $transport,
+            'httpClient' => $httpClient,
+            'requestFactory' => $requestFactory,
+            'responseParser' => $responseParser,
+        ] = $appKey instanceof Config
+            ? $this->normalizeLegacyConstructorArguments(
+                $appKey,
+                $appSecret,
+                $signSecret,
+                $accessToken,
+                $baseUrl
+            )
+            : $this->normalizeCredentialConstructorArguments(
+                $appKey,
+                $appSecret,
+                $signSecret,
+                $accessToken,
+                $baseUrl,
+                $transport,
+                $httpClient,
+                $requestFactory,
+                $responseParser
+            );
+
+        $this->config = $config;
         $this->responseParser = $responseParser ?? new ResponseParser();
         $this->transport = $transport ?? new GuzzleTransport($httpClient ?? new Client(), $this->config);
         $this->requestFactory = $requestFactory ?? new RequestFactory($this->config);
@@ -53,6 +87,30 @@ final class KwaiShopClient
     public function config(): Config
     {
         return $this->config;
+    }
+
+    public static function make(
+        string $appKey,
+        ?string $appSecret,
+        string $signSecret,
+        ?string $accessToken = null,
+        ?string $baseUrl = null,
+        ?TransportInterface $transport = null,
+        ?ClientInterface $httpClient = null,
+        ?RequestFactory $requestFactory = null,
+        ?ResponseParser $responseParser = null,
+    ): self {
+        return new self(
+            $appKey,
+            $appSecret,
+            $signSecret,
+            $accessToken,
+            $baseUrl,
+            $transport,
+            $httpClient,
+            $requestFactory,
+            $responseParser
+        );
     }
 
     public function oauth(): OAuthClient
@@ -71,7 +129,7 @@ final class KwaiShopClient
 
         $className = $this->resolveApiClass($name);
 
-        return new PendingRequest(new $className($this));
+        return $this->createPendingRequest($className);
     }
 
     public function rawRequest(
@@ -90,7 +148,8 @@ final class KwaiShopClient
             'GET' => $this->get(
                 $request['url'],
                 $request['params'],
-                $this->headersFromOptions($transportOptions)
+                $this->headersFromOptions($transportOptions),
+                $transportOptions
             ),
             'POST' => $this->sendGatewayBody($request['url'], $request['params'], $contentType, $transportOptions),
             default => throw new ValidationException(sprintf(
@@ -103,61 +162,67 @@ final class KwaiShopClient
     /**
      * @param array<string, scalar|null> $query
      * @param array<string, string> $headers
+     * @param array<string, mixed> $options
      *
      * @return array<string, mixed>
      */
-    public function get(string $url, array $query = [], array $headers = []): array
+    public function get(string $url, array $query = [], array $headers = [], array $options = []): array
     {
-        return $this->request('GET', $url, [
-            'query' => $query,
-            'headers' => $headers,
-        ]);
+        $requestOptions = $this->prepareRequestOptions($headers, $options);
+        $requestOptions['query'] = $query;
+
+        return $this->request('GET', $url, $requestOptions);
     }
 
     /**
      * @param array<string, scalar|null> $form
      * @param array<string, string> $headers
+     * @param array<string, mixed> $options
      *
      * @return array<string, mixed>
      */
-    public function post(string $url, array $form = [], array $headers = []): array
+    public function post(string $url, array $form = [], array $headers = [], array $options = []): array
     {
-        return $this->request('POST', $url, [
-            'form_params' => $form,
-            'headers' => array_merge([
-                'Content-Type' => 'application/x-www-form-urlencoded',
-            ], $headers),
-        ]);
+        $requestOptions = $this->prepareRequestOptions([
+            'Content-Type' => 'application/x-www-form-urlencoded',
+            ...$headers,
+        ], $options);
+        $requestOptions['form_params'] = $form;
+
+        return $this->request('POST', $url, $requestOptions);
     }
 
     /**
      * @param array<string, scalar|null> $json
      * @param array<string, string> $headers
+     * @param array<string, mixed> $options
      *
      * @return array<string, mixed>
      */
-    public function postJson(string $url, array $json = [], array $headers = []): array
+    public function postJson(string $url, array $json = [], array $headers = [], array $options = []): array
     {
-        return $this->request('POST', $url, [
-            'json' => $json,
-            'headers' => array_merge([
-                'Content-Type' => 'application/json',
-            ], $headers),
-        ]);
+        $requestOptions = $this->prepareRequestOptions([
+            'Content-Type' => 'application/json',
+            ...$headers,
+        ], $options);
+        $requestOptions['json'] = $json;
+
+        return $this->request('POST', $url, $requestOptions);
     }
 
     /**
      * @param list<array{name:string, contents:mixed, filename?:string, headers?:array<string, string>}> $multipart
      * @param array<string, string> $headers
+     * @param array<string, mixed> $options
      *
      * @return array<string, mixed>
      */
-    public function upload(string $url, array $multipart, array $headers = []): array
+    public function upload(string $url, array $multipart, array $headers = [], array $options = []): array
     {
-        return $this->request('POST', $url, [
-            'multipart' => $multipart,
-            'headers' => $headers,
-        ]);
+        $requestOptions = $this->prepareRequestOptions($headers, $options);
+        $requestOptions['multipart'] = $multipart;
+
+        return $this->request('POST', $url, $requestOptions);
     }
 
     /**
@@ -179,23 +244,191 @@ final class KwaiShopClient
      */
     private function sendGatewayBody(string $url, array $params, string $contentType, array $transportOptions = []): array
     {
+        $normalizedContentType = $this->normalizeContentType($contentType);
+
         if (isset($transportOptions['multipart']) && is_array($transportOptions['multipart'])) {
             return $this->upload(
                 $url,
                 $this->mergeMultipartFields($params, $transportOptions['multipart']),
-                $this->headersFromOptions($transportOptions)
+                $this->headersFromOptions($transportOptions),
+                $this->withoutOption($transportOptions, 'multipart')
             );
         }
 
-        if (str_starts_with(strtolower($contentType), 'multipart/')) {
-            return $this->upload($url, $this->normalizeMultipart($params), $this->headersFromOptions($transportOptions));
+        if (str_starts_with($normalizedContentType, 'multipart/')) {
+            return $this->upload(
+                $url,
+                $this->normalizeMultipart($params),
+                $this->headersFromOptions($transportOptions),
+                $transportOptions
+            );
         }
 
-        if ($contentType === 'application/json') {
-            return $this->postJson($url, $params, $this->headersFromOptions($transportOptions));
+        if ($normalizedContentType === 'application/json') {
+            return $this->postJson($url, $params, $this->headersFromOptions($transportOptions), $transportOptions);
         }
 
-        return $this->post($url, $params, $this->headersFromOptions($transportOptions));
+        return $this->post($url, $params, $this->headersFromOptions($transportOptions), $transportOptions);
+    }
+
+    /**
+     * @param class-string<RpcRequest> $className
+     */
+    private function createPendingRequest(string $className): PendingRequest
+    {
+        return new PendingRequest(new $className($this));
+    }
+
+    /**
+     * @param array<int, mixed> $arguments
+     * @param class-string<RpcRequest> $className
+     */
+    private function forwardExplicitApiCall(string $method, array $arguments, string $className): PendingRequest
+    {
+        if ($arguments !== []) {
+            throw new ValidationException(sprintf(
+                'Dynamic API method [%s] does not accept constructor arguments.',
+                $method
+            ));
+        }
+
+        return $this->createPendingRequest($className);
+    }
+
+    /**
+     * @return array{
+     *     config: Config,
+     *     transport: ?TransportInterface,
+     *     httpClient: ?ClientInterface,
+     *     requestFactory: ?RequestFactory,
+     *     responseParser: ?ResponseParser
+     * }
+     */
+    private function normalizeLegacyConstructorArguments(
+        Config $config,
+        mixed $transport,
+        mixed $httpClient,
+        mixed $requestFactory,
+        mixed $responseParser
+    ): array {
+        return [
+            'config' => $config,
+            'transport' => $this->expectNullableInstanceOf(
+                $transport,
+                TransportInterface::class,
+                'transport'
+            ),
+            'httpClient' => $this->expectNullableInstanceOf(
+                $httpClient,
+                ClientInterface::class,
+                'httpClient'
+            ),
+            'requestFactory' => $this->expectNullableInstanceOf(
+                $requestFactory,
+                RequestFactory::class,
+                'requestFactory'
+            ),
+            'responseParser' => $this->expectNullableInstanceOf(
+                $responseParser,
+                ResponseParser::class,
+                'responseParser'
+            ),
+        ];
+    }
+
+    /**
+     * @return array{
+     *     config: Config,
+     *     transport: ?TransportInterface,
+     *     httpClient: ?ClientInterface,
+     *     requestFactory: ?RequestFactory,
+     *     responseParser: ?ResponseParser
+     * }
+     */
+    private function normalizeCredentialConstructorArguments(
+        string $appKey,
+        mixed $appSecret,
+        mixed $signSecret,
+        mixed $accessToken,
+        mixed $baseUrl,
+        mixed $transport,
+        mixed $httpClient,
+        mixed $requestFactory,
+        mixed $responseParser
+    ): array {
+        $config = new Config(
+            appKey: $appKey,
+            appSecret: $this->expectNullableString($appSecret, 'appSecret'),
+            signSecret: $this->expectString($signSecret, 'signSecret'),
+            accessToken: $this->expectNullableString($accessToken, 'accessToken'),
+            baseUrl: $this->expectNullableString($baseUrl, 'baseUrl') ?? 'https://openapi.kwaixiaodian.com',
+        );
+
+        return [
+            'config' => $config,
+            'transport' => $this->expectNullableInstanceOf(
+                $transport,
+                TransportInterface::class,
+                'transport'
+            ),
+            'httpClient' => $this->expectNullableInstanceOf(
+                $httpClient,
+                ClientInterface::class,
+                'httpClient'
+            ),
+            'requestFactory' => $this->expectNullableInstanceOf(
+                $requestFactory,
+                RequestFactory::class,
+                'requestFactory'
+            ),
+            'responseParser' => $this->expectNullableInstanceOf(
+                $responseParser,
+                ResponseParser::class,
+                'responseParser'
+            ),
+        ];
+    }
+
+    private function expectString(mixed $value, string $field): string
+    {
+        if (!is_string($value)) {
+            throw new ValidationException(sprintf('%s must be a string.', $field));
+        }
+
+        return $value;
+    }
+
+    private function expectNullableString(mixed $value, string $field): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!is_string($value)) {
+            throw new ValidationException(sprintf('%s must be a string or null.', $field));
+        }
+
+        return $value;
+    }
+
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $type
+     *
+     * @return T|null
+     */
+    private function expectNullableInstanceOf(mixed $value, string $type, string $field): ?object
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (!$value instanceof $type) {
+            throw new ValidationException(sprintf('%s must implement %s.', $field, $type));
+        }
+
+        return $value;
     }
 
     /**
@@ -231,6 +464,42 @@ final class KwaiShopClient
         $headers = $transportOptions['headers'] ?? [];
 
         return is_array($headers) ? $headers : [];
+    }
+
+    /**
+     * @param array<string, string> $headers
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
+    private function prepareRequestOptions(array $headers, array $options): array
+    {
+        $requestOptions = $options;
+        $requestOptions['headers'] = array_merge(
+            is_array($requestOptions['headers'] ?? null) ? $requestOptions['headers'] : [],
+            $headers
+        );
+
+        return $requestOptions;
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     *
+     * @return array<string, mixed>
+     */
+    private function withoutOption(array $options, string $key): array
+    {
+        unset($options[$key]);
+
+        return $options;
+    }
+
+    private function normalizeContentType(string $contentType): string
+    {
+        $mediaType = explode(';', strtolower(trim($contentType)), 2)[0] ?? '';
+
+        return trim($mediaType);
     }
 
     /**
