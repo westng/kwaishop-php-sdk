@@ -18,9 +18,6 @@
 
 幸有补救性 SDK，让 PHP 开发者不至于掉队，能凭本事搭起投放管理系统，但背后是他们付出的诸多额外心血。官方这种"偏心"做法，实在该反省，给 PHP 开发者们一个交代！
 
-官方文档：
-<https://open.kwaixiaodian.com/zone/new/docs/dev>
-
 ## 功能特性
 
 - 支持 PHP `8.1+`
@@ -35,6 +32,13 @@
 - 提供标准请求基座：`get()`、`post()`、`postJson()`、`upload()`
 - 提供 `rawRequest()` 作为网关兜底调用能力
 - 提供 PHPUnit 测试底座与本地手动调试脚本
+
+## 使用条件
+
+### 开发者条件
+
+- 使用 SDK 需要首先注册成为快手电商开发者，请参考 [开发者快速入门文档](https://open.kwaixiaodian.com/zone/new/docs/dev)
+- 使用 SDK 需要先拥有 API 的访问权限，所有 SDK 的使用与应用拥有的权限组相关联
 
 ## SDK 目录
 
@@ -80,10 +84,10 @@ src/
 
 说明：
 
-- 每个官方接口对应一个独立类文件，避免资源聚合层带来的职责混乱
-- `Api/*` 目录名尽量与官方文档分类保持一致，方便检索与对照文档
-- `Core/*` 只保留 SDK 基础能力，不承担具体业务接口职责
-- 新接口优先补到对应分类目录，而不是继续堆到通用文件里
+- `Api/*` 目录按官方文档分类组织，方便快速定位对应接口
+- `Core/*` 目录提供签名、鉴权、请求、响应解析等底层能力
+- `KwaiShopClient.php` 是 SDK 的统一调用入口
+- 如果你想查看某个接口是否已封装，优先到对应分类目录中检索
 
 ## 安装
 
@@ -99,34 +103,31 @@ composer require westng/kwaishop-php-sdk
 declare(strict_types=1);
 
 use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\Api\Shop\OpenScoreMasterGet;
+use KwaiShopSDK\Exception\KwaiShopException;
 use KwaiShopSDK\KwaiShopClient;
 
 $config = new Config(
     appKey: 'your-app-key',
     appSecret: 'your-app-secret',
     signSecret: 'your-sign-secret',
+    accessToken: 'your-access-token',
 );
 
 $client = new KwaiShopClient($config);
 
-$shop = (new OpenScoreMasterGet($client))->execute(
-    accessToken: 'your-access-token',
-);
+try {
+    $response = $client
+        ->OpenShopInfoGet()
+        ->setParams([])
+        ->send();
+
+    print_r($response);
+} catch (KwaiShopException $e) {
+    echo "错误: {$e->getMessage()}";
+}
 ```
 
-当前 `1.0.0` 聚焦“可稳定复用的 SDK 底座”，接口类会按官方文档分类逐步补齐。
-
-如果某个接口类暂未提供，也可以临时使用：
-
-```php
-$response = $client->rawRequest(
-    method: 'open.shop.info.get',
-    params: [],
-    accessToken: 'your-access-token',
-    httpMethod: 'POST',
-);
-```
+当前 `1.0.0` 已完成可稳定复用的 SDK 底座，并按官方文档分类提供接口封装。
 
 ## 运行环境
 
@@ -172,108 +173,70 @@ $config = new Config(
 
 ## 认证与授权
 
-快手电商开放平台当前接入的核心凭据主要包括：
+快手电商开放平台接入时常用的核心凭据包括：
 
 - `app_key`
 - `app_secret`
 - `sign_secret`
 
-如果你的接入场景涉及平台消息服务或加解密能力，本项目的测试环境模板中也预留了消息私钥相关配置位，便于本地联调。
+- 需商家授权的接口通常还需要 `accessToken`
+- 推荐在初始化 `Config` 时传入默认 `accessToken`
+- 如果是多商家场景，也可以在单次请求时通过 `setAccessToken()` 临时覆盖
 
-### 构建授权地址
+SDK 当前提供的 OAuth 能力包括：
 
-```php
-$authorizeUrl = $client->oauth()->buildAuthorizeUrl(
-    redirectUri: 'https://your-app.test/oauth/callback',
-    scopes: ['merchant_order', 'merchant_item'],
-    state: 'local-test',
-);
-```
+- 构建授权地址：`buildAuthorizeUrl()`
+- 通过 `code` 换取 token：`getAccessToken()`
+- 刷新 token：`refreshAccessToken()`
+- 获取应用 token：`getClientCredentialsToken()`
 
-### 通过 `code` 换取 token
+如果你需要本地联调 OAuth 或功能测试，可以再结合项目中的测试脚本使用。
 
-```php
-$token = $client->oauth()->getAccessToken('authorization-code');
+## 常见问题
 
-$accessToken = $token->accessToken();
-$refreshToken = $token->refreshToken();
-```
+### 1. 没有官方 PHP SDK，可以直接用于生产吗？
 
-### 刷新 token
+可以。本项目就是为 PHP 场景补齐快手电商开放平台 SDK 能力而设计，已提供签名、鉴权、请求封装、响应解析和官方接口分类封装。
 
-```php
-$token = $client->oauth()->refreshAccessToken('refresh-token');
-```
+### 2. SDK 会自动帮我申请接口权限吗？
 
-### 获取应用 token
+不会。SDK 只负责接口调用封装，具体能否调用成功，取决于你的应用是否已经获得对应权限组，以及当前商家是否完成授权。
 
-```php
-$token = $client->oauth()->getClientCredentialsToken();
-```
+### 3. 所有接口都需要传 `accessToken` 吗？
 
-## 手动调试
+不是。需商家授权的接口需要 `accessToken`，无商家授权要求的接口则按开放平台文档要求调用。推荐在初始化 `Config` 时传入默认 `accessToken`。
 
-项目提供了一套仅面向测试与本地联调的环境变量模板和命令行脚本。
+### 4. SDK 会主动读取项目里的 `.env` 吗？
 
-### 环境变量模板
+不会。`.env.example` 和 `.env` 仅用于测试与本地联调脚本，SDK 运行时不会主动加载环境变量文件。
 
-```bash
-cp .env.example .env
-```
+### 5. 如何确认某个接口是否已经封装？
 
-说明：
+优先到 `src/Api/*` 对应分类目录中检索，类名通常与官方接口名保持一致，例如 `open.shop.info.get` 对应 `OpenShopInfoGet`。
 
-- `.env.example` 只用于测试场景示例
-- SDK 运行时不会主动读取 `.env`
-- `tests/bootstrap.php` 会在 PHPUnit 与 `tests/Functional/*` 脚本执行时加载 `.env`
+## 贡献指南
 
-### OAuth 联调脚本
+- 欢迎通过 Issue 提交 Bug 反馈、接口补充建议或文档改进建议
+- 提交 PR 前请先确认变更目标明确，避免一次性混入无关修改
+- 新增接口时，请按官方文档分类放入对应 `src/Api/*` 目录
+- 提交代码时请保持命名、目录结构和现有 SDK 风格一致
+- 涉及行为变更时，请同步补充或更新测试与 README 文档
 
-```bash
-php tests/Functional/oauth_flow.php authorize --app-type=self https://your-callback.test/oauth/callback merchant_order,merchant_item local-test
-php tests/Functional/oauth_flow.php authorize --app-type=self merchant_order,merchant_item local-test
-php tests/Functional/oauth_flow.php authorize --app-type=service-market merchant_order,merchant_item local-test
-php tests/Functional/oauth_flow.php exchange YOUR_CODE
-php tests/Functional/oauth_flow.php refresh
-php tests/Functional/oauth_flow.php client-token
-```
+### 提交规范
 
-补充说明：
+- Commit Message 请使用规范前缀：`feat`、`fix`、`docs`、`style`、`refactor`、`test`、`chore`
+- 提交标题建议使用 `type: subject` 格式，例如 `feat: add open shop info api`
+- 一次提交只处理一个明确职责，避免把接口新增、重构、文档修改混在同一个提交里
+- 提交信息应直接说明本次改动结果，避免使用含糊描述，如“update”或“modify”
+- 不要提交 `.env`、本地缓存文件、IDE 配置或其他与功能无关的临时文件
 
-- 如果 `.env` 中设置了 `KWAISHOP_TEST_REDIRECT_URI`，`authorize` 可以省略回调地址参数
-- `--app-type=self` 适用于自研应用
-- `--app-type=service-market` 适用于服务市场应用
+### Pull Request 规范
 
-### 原始接口调试
-
-```bash
-php tests/Functional/api_call.php call open.shop.info.get '{}'
-php tests/Functional/api_call.php call open.seller.order.list '{"pageSize":20,"pageNum":1}' YOUR_ACCESS_TOKEN
-```
-
-如果未显式传入 access token，脚本会回退读取 `.env` 中的 `KWAISHOP_TEST_ACCESS_TOKEN`。
-
-## 开发状态
-
-当前版本：`1.0.0`
-
-已完成：
-
-- 配置对象
-- 签名能力
-- OAuth 客户端
-- Guzzle 传输层
-- 请求工厂
-- 响应解析器
-- 主客户端与声明式 API 入口
-- FPM / Swoole Coroutine 运行时兼容
-- 基础测试与手动调试脚本
-
-后续计划：
-
-- 逐步补齐快手电商开放平台接口封装
-- 按官方文档目录持续补齐 `src/Api/*`
-- 增加更多集成测试与联调示例
+- Pull Request 标题请清楚说明本次变更主题，并尽量与主要 Commit 保持一致
+- Pull Request 内容请说明变更目的、核心改动、影响范围，以及是否存在兼容性影响
+- 如果 Pull Request 涉及新接口、行为调整或文档变化，请同步更新对应测试或 README 内容
+- 一个 Pull Request 只解决一类问题，避免把多个不相关需求合并提交
+- 提交 Pull Request 前请先自查代码风格、命名、目录归类和基础可用性
 
 ## 开源协议
 

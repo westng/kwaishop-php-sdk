@@ -18,9 +18,6 @@ That gap is hard to justify. PHP developers have contributed enormously to the i
 
 Community-driven SDK work is what keeps PHP developers from falling behind, making it possible to build serious integration systems despite the extra effort required. A proper PHP SDK should not be an afterthought, and this project exists to provide the missing foundation.
 
-Official docs:
-<https://open.kwaixiaodian.com/zone/new/docs/dev>
-
 ## Features
 
 - Supports PHP `8.1+`
@@ -35,6 +32,13 @@ Official docs:
 - Standard request primitives: `get()`, `post()`, `postJson()`, `upload()`
 - Low-level `rawRequest()` fallback for gateway calls
 - PHPUnit test foundation and manual debug scripts
+
+## Usage Requirements
+
+### Developer Requirements
+
+- Before using the SDK, you must first register as a Kuaishou E-commerce developer. Please refer to the [developer quick start documentation](https://open.kwaixiaodian.com/zone/new/docs/dev).
+- Before using the SDK, you must already have access to the target APIs. All SDK usage is tied to the permission groups granted to your application.
 
 ## SDK Structure
 
@@ -80,10 +84,10 @@ src/
 
 Notes:
 
-- Each official endpoint is mapped to its own dedicated class file
-- `Api/*` folder names stay aligned with the official documentation categories whenever possible
-- `Core/*` only contains foundational SDK concerns, not business endpoint logic
-- New endpoints should be added to the matching category folder instead of generic catch-all files
+- `Api/*` is organized by official documentation category, making endpoint lookup easier
+- `Core/*` contains the shared SDK infrastructure such as signing, authentication, request building, and response parsing
+- `KwaiShopClient.php` is the unified entry point for SDK calls
+- If you want to check whether an endpoint is already wrapped, look in the matching category directory first
 
 ## Installation
 
@@ -99,34 +103,31 @@ composer require westng/kwaishop-php-sdk
 declare(strict_types=1);
 
 use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\Api\Shop\OpenScoreMasterGet;
+use KwaiShopSDK\Exception\KwaiShopException;
 use KwaiShopSDK\KwaiShopClient;
 
 $config = new Config(
     appKey: 'your-app-key',
     appSecret: 'your-app-secret',
     signSecret: 'your-sign-secret',
+    accessToken: 'your-access-token',
 );
 
 $client = new KwaiShopClient($config);
 
-$shop = (new OpenScoreMasterGet($client))->execute(
-    accessToken: 'your-access-token',
-);
+try {
+    $response = $client
+        ->OpenShopInfoGet()
+        ->setParams([])
+        ->send();
+
+    print_r($response);
+} catch (KwaiShopException $e) {
+    echo "Error: {$e->getMessage()}";
+}
 ```
 
-Version `1.0.0` focuses on the SDK foundation first. Endpoint classes will be added incrementally by official documentation category.
-
-If an endpoint class is not available yet, you can temporarily call:
-
-```php
-$response = $client->rawRequest(
-    method: 'open.shop.info.get',
-    params: [],
-    accessToken: 'your-access-token',
-    httpMethod: 'POST',
-);
-```
+Version `1.0.0` already includes the reusable SDK foundation and endpoint wrappers organized by official documentation category.
 
 ## Runtime Compatibility
 
@@ -178,102 +179,64 @@ Typical platform credentials include:
 - `app_secret`
 - `sign_secret`
 
-If your integration also uses the platform message service or decryption workflows, the test environment template includes a message private key placeholder for local verification.
+- Merchant-authorized endpoints usually also require an `accessToken`
+- The recommended approach is to configure a default `accessToken` when initializing `Config`
+- In multi-merchant scenarios, you can override the token per request with `setAccessToken()`
 
-### Build an authorize URL
+The SDK currently provides these OAuth capabilities:
 
-```php
-$authorizeUrl = $client->oauth()->buildAuthorizeUrl(
-    redirectUri: 'https://your-app.test/oauth/callback',
-    scopes: ['merchant_order', 'merchant_item'],
-    state: 'local-test',
-);
-```
+- Build authorize URLs with `buildAuthorizeUrl()`
+- Exchange `code` for token with `getAccessToken()`
+- Refresh tokens with `refreshAccessToken()`
+- Get application tokens with `getClientCredentialsToken()`
 
-### Exchange code for token
+If you need local OAuth verification or functional debugging, you can still combine these capabilities with the repository test scripts separately.
 
-```php
-$token = $client->oauth()->getAccessToken('authorization-code');
+## FAQ
 
-$accessToken = $token->accessToken();
-$refreshToken = $token->refreshToken();
-```
+### 1. There is no official PHP SDK. Can this be used in production?
 
-### Refresh token
+Yes. This project exists to fill the PHP SDK gap for the Kuaishou E-commerce Open Platform, and already provides signing, authentication, request packaging, response parsing, and endpoint wrappers organized by official documentation categories.
 
-```php
-$token = $client->oauth()->refreshAccessToken('refresh-token');
-```
+### 2. Will the SDK apply for API permissions automatically?
 
-### Get client credentials token
+No. The SDK only wraps the API calls. Whether a request can succeed depends on whether your application has the required permission groups and whether the merchant has completed authorization.
 
-```php
-$token = $client->oauth()->getClientCredentialsToken();
-```
+### 3. Do all endpoints require an `accessToken`?
 
-## Manual Debug
+No. Merchant-authorized endpoints require an `accessToken`, while endpoints without merchant authorization should be called according to the official platform documentation. The recommended approach is to configure a default `accessToken` in `Config`.
 
-The repository includes a test-only environment template and manual helper scripts for local debugging.
+### 4. Does the SDK read `.env` automatically?
 
-### Test env template
+No. `.env.example` and `.env` are only used for tests and local debugging scripts. The SDK runtime does not load environment variable files automatically.
 
-```bash
-cp .env.example .env
-```
+### 5. How can I check whether an endpoint has already been wrapped?
 
-Notes:
+Start by checking the matching category under `src/Api/*`. Class names usually stay aligned with the official endpoint name, for example `open.shop.info.get` maps to `OpenShopInfoGet`.
 
-- `.env.example` is only a template for test scenarios
-- The SDK runtime does not read `.env`
-- `tests/bootstrap.php` loads `.env` for PHPUnit and `tests/Functional/*` scripts
+## Contribution Guide
 
-### OAuth helper
+- Issues are welcome for bug reports, missing endpoint requests, and documentation improvements
+- Before opening a PR, keep the change scope clear and avoid mixing unrelated edits
+- When adding a new endpoint, place it under the matching official documentation category in `src/Api/*`
+- Keep naming, directory structure, and SDK style consistent with the existing project
+- If your change affects behavior, update the related tests and README documentation together
 
-```bash
-php tests/Functional/oauth_flow.php authorize --app-type=self https://your-callback.test/oauth/callback merchant_order,merchant_item local-test
-php tests/Functional/oauth_flow.php authorize --app-type=self merchant_order,merchant_item local-test
-php tests/Functional/oauth_flow.php authorize --app-type=service-market merchant_order,merchant_item local-test
-php tests/Functional/oauth_flow.php exchange YOUR_CODE
-php tests/Functional/oauth_flow.php refresh
-php tests/Functional/oauth_flow.php client-token
-```
+### Commit Convention
 
-Notes:
+- Use a conventional commit prefix in the commit message: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, or `chore`
+- The title should preferably follow the `type: subject` format, for example `feat: add open shop info api`
+- Keep each commit focused on one clear responsibility instead of mixing endpoint additions, refactors, and documentation changes together
+- Commit messages should describe the actual outcome of the change and should avoid vague descriptions such as `update` or `modify`
+- Do not commit `.env`, local cache files, IDE settings, or other temporary files unrelated to the SDK itself
 
-- If `KWAISHOP_TEST_REDIRECT_URI` is set in `.env`, `authorize` can omit the redirect URI argument
-- `--app-type=self` is for self-developed apps
-- `--app-type=service-market` is for service-market apps
+### Pull Request Convention
 
-### Raw API helper
-
-```bash
-php tests/Functional/api_call.php call open.shop.info.get '{}'
-php tests/Functional/api_call.php call open.seller.order.list '{"pageSize":20,"pageNum":1}' YOUR_ACCESS_TOKEN
-```
-
-If the access token argument is omitted, the script falls back to `KWAISHOP_TEST_ACCESS_TOKEN` from `.env`.
-
-## Project Status
-
-Current version: `1.0.0`
-
-Completed:
-
-- Configuration object
-- Signing support
-- OAuth client
-- Guzzle transport layer
-- Request factory
-- Response parser
-- Main client and declarative API entry points
-- FPM / Swoole Coroutine runtime compatibility
-- Base tests and manual debug helpers
-
-Planned next:
-
-- Incrementally wrap more Kuaishou E-commerce Open Platform endpoints
-- Continue filling `src/Api/*` by official documentation category
-- Expand integration-style tests and debug examples
+- The Pull Request title should clearly describe the change and should stay aligned with the main commit whenever possible
+- The Pull Request description should explain the purpose, key changes, affected scope, and whether there is any compatibility impact
+- If the Pull Request includes new endpoints, behavior changes, or documentation updates, update the related tests or README content together
+- Keep one Pull Request focused on one class of change instead of merging unrelated requirements together
+- Before opening a Pull Request, do a basic self-check on code style, naming, directory placement, and general usability
 
 ## License
 
