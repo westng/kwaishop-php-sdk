@@ -30,6 +30,19 @@ final class KwaiShopClient
 {
     use ApiClientMethods;
 
+    private const SUPPORTED_OPTIONS = [
+        'accessToken',
+        'baseUrl',
+        'oauthAuthorizeUrl',
+        'oauthAccessTokenUrl',
+        'oauthRefreshTokenUrl',
+        'signMethod',
+        'connectTimeout',
+        'readTimeout',
+        'autoDetectRuntime',
+        'userAgent',
+    ];
+
     /**
      * @var array<string, class-string<RpcRequest>|null>
      */
@@ -42,48 +55,23 @@ final class KwaiShopClient
     private readonly OAuthClient $oauthClient;
 
     /**
-     * Create a client from either a {@see Config} instance or direct credentials.
+     * Create a client from raw credentials and an associative options array.
+     *
+     * @param array<string, mixed> $options
      *
      * @throws ValidationException
      */
     public function __construct(
-        Config|string $appKey,
-        mixed $appSecret = null,
-        mixed $signSecret = null,
-        mixed $accessToken = null,
-        mixed $baseUrl = null,
-        mixed $transport = null,
-        mixed $httpClient = null,
-        mixed $requestFactory = null,
-        mixed $responseParser = null,
+        string $appKey,
+        ?string $appSecret,
+        string $signSecret,
+        array $options = [],
+        ?TransportInterface $transport = null,
+        ?ClientInterface $httpClient = null,
+        ?RequestFactory $requestFactory = null,
+        ?ResponseParser $responseParser = null,
     ) {
-        [
-            'config' => $config,
-            'transport' => $transport,
-            'httpClient' => $httpClient,
-            'requestFactory' => $requestFactory,
-            'responseParser' => $responseParser,
-        ] = $appKey instanceof Config
-            ? $this->normalizeLegacyConstructorArguments(
-                $appKey,
-                $appSecret,
-                $signSecret,
-                $accessToken,
-                $baseUrl
-            )
-            : $this->normalizeCredentialConstructorArguments(
-                $appKey,
-                $appSecret,
-                $signSecret,
-                $accessToken,
-                $baseUrl,
-                $transport,
-                $httpClient,
-                $requestFactory,
-                $responseParser
-            );
-
-        $this->config = $config;
+        $this->config = $this->buildConfigFromOptions($appKey, $appSecret, $signSecret, $options);
         $this->responseParser = $responseParser ?? new ResponseParser();
         $this->transport = $transport ?? new GuzzleTransport($httpClient ?? new Client(), $this->config);
         $this->requestFactory = $requestFactory ?? new RequestFactory($this->config);
@@ -94,31 +82,6 @@ final class KwaiShopClient
     public function config(): Config
     {
         return $this->config;
-    }
-
-    /** Create a client directly from raw credential values. */
-    public static function make(
-        string $appKey,
-        ?string $appSecret,
-        string $signSecret,
-        ?string $accessToken = null,
-        ?string $baseUrl = null,
-        ?TransportInterface $transport = null,
-        ?ClientInterface $httpClient = null,
-        ?RequestFactory $requestFactory = null,
-        ?ResponseParser $responseParser = null,
-    ): self {
-        return new self(
-            $appKey,
-            $appSecret,
-            $signSecret,
-            $accessToken,
-            $baseUrl,
-            $transport,
-            $httpClient,
-            $requestFactory,
-            $responseParser
-        );
     }
 
     /** Get the OAuth helper bound to this client. */
@@ -340,144 +303,32 @@ final class KwaiShopClient
         return $this->createPendingRequest($className);
     }
 
-    /**
-     * Normalize constructor arguments when the first argument is already a config object.
-     *
-     * @return array{
-     *     config: Config,
-     *     transport: ?TransportInterface,
-     *     httpClient: ?ClientInterface,
-     *     requestFactory: ?RequestFactory,
-     *     responseParser: ?ResponseParser
-     * }
-     */
-    private function normalizeLegacyConstructorArguments(
-        Config $config,
-        mixed $transport,
-        mixed $httpClient,
-        mixed $requestFactory,
-        mixed $responseParser
-    ): array {
-        return [
-            'config' => $config,
-            'transport' => $this->expectNullableInstanceOf(
-                $transport,
-                TransportInterface::class,
-                'transport'
-            ),
-            'httpClient' => $this->expectNullableInstanceOf(
-                $httpClient,
-                ClientInterface::class,
-                'httpClient'
-            ),
-            'requestFactory' => $this->expectNullableInstanceOf(
-                $requestFactory,
-                RequestFactory::class,
-                'requestFactory'
-            ),
-            'responseParser' => $this->expectNullableInstanceOf(
-                $responseParser,
-                ResponseParser::class,
-                'responseParser'
-            ),
-        ];
-    }
-
-    /**
-     * Normalize constructor arguments when the client is created from raw credentials.
-     *
-     * @return array{
-     *     config: Config,
-     *     transport: ?TransportInterface,
-     *     httpClient: ?ClientInterface,
-     *     requestFactory: ?RequestFactory,
-     *     responseParser: ?ResponseParser
-     * }
-     */
-    private function normalizeCredentialConstructorArguments(
+    /** Build the immutable runtime config from constructor credentials and options. */
+    private function buildConfigFromOptions(
         string $appKey,
-        mixed $appSecret,
-        mixed $signSecret,
-        mixed $accessToken,
-        mixed $baseUrl,
-        mixed $transport,
-        mixed $httpClient,
-        mixed $requestFactory,
-        mixed $responseParser
-    ): array {
-        $config = new Config(
-            appKey: $appKey,
-            appSecret: $this->expectNullableString($appSecret, 'appSecret'),
-            signSecret: $this->expectString($signSecret, 'signSecret'),
-            accessToken: $this->expectNullableString($accessToken, 'accessToken'),
-            baseUrl: $this->expectNullableString($baseUrl, 'baseUrl') ?? 'https://openapi.kwaixiaodian.com',
-        );
-
-        return [
-            'config' => $config,
-            'transport' => $this->expectNullableInstanceOf(
-                $transport,
-                TransportInterface::class,
-                'transport'
-            ),
-            'httpClient' => $this->expectNullableInstanceOf(
-                $httpClient,
-                ClientInterface::class,
-                'httpClient'
-            ),
-            'requestFactory' => $this->expectNullableInstanceOf(
-                $requestFactory,
-                RequestFactory::class,
-                'requestFactory'
-            ),
-            'responseParser' => $this->expectNullableInstanceOf(
-                $responseParser,
-                ResponseParser::class,
-                'responseParser'
-            ),
-        ];
-    }
-
-    private function expectString(mixed $value, string $field): string
-    {
-        if (!is_string($value)) {
-            throw new ValidationException(sprintf('%s must be a string.', $field));
+        ?string $appSecret,
+        string $signSecret,
+        array $options
+    ): Config {
+        if ($options !== [] && array_is_list($options)) {
+            throw new ValidationException('options must be an associative array.');
         }
 
-        return $value;
-    }
-
-    private function expectNullableString(mixed $value, string $field): ?string
-    {
-        if ($value === null) {
-            return null;
+        $unsupportedKeys = array_values(array_diff(array_keys($options), self::SUPPORTED_OPTIONS));
+        if ($unsupportedKeys !== []) {
+            throw new ValidationException(sprintf(
+                'Unsupported client options: %s. Supported options are: %s.',
+                implode(', ', array_map('strval', $unsupportedKeys)),
+                implode(', ', self::SUPPORTED_OPTIONS)
+            ));
         }
 
-        if (!is_string($value)) {
-            throw new ValidationException(sprintf('%s must be a string or null.', $field));
-        }
-
-        return $value;
-    }
-
-    /**
-     * @template T of object
-     *
-     * @param class-string<T> $type
-     *
-     * @return T|null
-     */
-    private function expectNullableInstanceOf(mixed $value, string $type, string $field): ?object
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        if (!$value instanceof $type) {
-            throw new ValidationException(sprintf('%s must implement %s.', $field, $type));
-        }
-
-        return $value;
+        return Config::fromArray([
+            ...$options,
+            'appKey' => $appKey,
+            'appSecret' => $appSecret,
+            'signSecret' => $signSecret,
+        ]);
     }
 
     /**

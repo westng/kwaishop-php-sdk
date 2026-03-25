@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Config\Config;
 use KwaiShopSDK\Exception\ValidationException;
 use KwaiShopSDK\Client\KwaiShopClient;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
@@ -21,28 +20,31 @@ use PHPUnit\Framework\TestCase;
 
 final class KwaiShopClientDynamicApiTest extends TestCase
 {
-    public function testClientCanBeConstructedWithDirectCredentials(): void
+    public function testClientCanBeConstructedWithOptionsArray(): void
     {
         $transport = new FakeTransport();
-        $client = KwaiShopClient::make(
+        $client = new KwaiShopClient(
             'test-app-key',
             'test-app-secret',
             'test-sign-secret',
-            'default-token',
-            null,
+            [
+                'accessToken' => 'default-token',
+                'autoDetectRuntime' => false,
+            ],
             $transport
         );
 
         $response = $client->OpenShopInfoGet()->send();
 
         self::assertSame(1, $response['result']);
+        self::assertFalse($client->config()->autoDetectRuntime());
         self::assertSame('default-token', $transport->requests[0]['options']['query']['access_token']);
     }
 
     public function testDynamicApiMethodUsesDefaultAccessTokenFromConfig(): void
     {
         $transport = new FakeTransport();
-        $client = new KwaiShopClient($this->makeConfig('default-token'), $transport);
+        $client = $this->makeClient('default-token', $transport);
 
         $response = $client->OpenShopInfoGet()->send();
 
@@ -55,7 +57,7 @@ final class KwaiShopClientDynamicApiTest extends TestCase
     public function testDynamicApiMethodSupportsParamsAndExplicitAccessTokenOverride(): void
     {
         $transport = new FakeTransport();
-        $client = new KwaiShopClient($this->makeConfig('default-token'), $transport);
+        $client = $this->makeClient('default-token', $transport);
 
         $client->OpenOrderDetail()
             ->setParams(['oid' => 'OID-10001'])
@@ -70,7 +72,7 @@ final class KwaiShopClientDynamicApiTest extends TestCase
 
     public function testDynamicApiMethodRejectsUnknownEndpoint(): void
     {
-        $client = new KwaiShopClient($this->makeConfig(), new FakeTransport());
+        $client = $this->makeClient(null, new FakeTransport());
 
         $this->expectException(ValidationException::class);
         $client->OpenNotExistsApi()->send();
@@ -78,19 +80,33 @@ final class KwaiShopClientDynamicApiTest extends TestCase
 
     public function testDynamicApiMethodRejectsUnexpectedArguments(): void
     {
-        $client = new KwaiShopClient($this->makeConfig(), new FakeTransport());
+        $client = $this->makeClient(null, new FakeTransport());
 
         $this->expectException(ValidationException::class);
         $client->OpenShopInfoGet('unexpected');
     }
 
-    private function makeConfig(?string $accessToken = null): Config
+    public function testConstructorRejectsUnknownOptions(): void
     {
-        return new Config(
-            appKey: 'test-app-key',
-            appSecret: 'test-app-secret',
-            signSecret: 'test-sign-secret',
-            accessToken: $accessToken,
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Unsupported client options: retry');
+
+        new KwaiShopClient(
+            'test-app-key',
+            'test-app-secret',
+            'test-sign-secret',
+            ['retry' => true]
+        );
+    }
+
+    private function makeClient(?string $accessToken = null, ?FakeTransport $transport = null): KwaiShopClient
+    {
+        return new KwaiShopClient(
+            'test-app-key',
+            'test-app-secret',
+            'test-sign-secret',
+            $accessToken !== null ? ['accessToken' => $accessToken] : [],
+            $transport
         );
     }
 }

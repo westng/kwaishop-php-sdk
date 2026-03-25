@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Config\Config;
 use KwaiShopSDK\Exception\ValidationException;
 use KwaiShopSDK\Client\KwaiShopClient;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
@@ -23,7 +22,7 @@ final class KwaiShopClientRawRequestTest extends TestCase
 {
     public function testRawRequestRejectsUnsupportedGatewayMethod(): void
     {
-        $client = new KwaiShopClient($this->makeConfig(), new FakeTransport());
+        $client = $this->makeClient(new FakeTransport());
 
         $this->expectException(ValidationException::class);
         $client->rawRequest('open.shop.info.get', [], 'token', '1', 'DELETE');
@@ -32,7 +31,7 @@ final class KwaiShopClientRawRequestTest extends TestCase
     public function testRawRequestMergesGatewayFieldsIntoMultipartRequest(): void
     {
         $transport = new FakeTransport();
-        $client = new KwaiShopClient($this->makeConfig(), $transport);
+        $client = $this->makeClient($transport);
 
         $client->rawRequest(
             'open.demo.upload',
@@ -63,7 +62,7 @@ final class KwaiShopClientRawRequestTest extends TestCase
     public function testRawRequestPassesTransportOptionsToGetRequests(): void
     {
         $transport = new FakeTransport();
-        $client = new KwaiShopClient($this->makeConfig(), $transport);
+        $client = $this->makeClient($transport);
 
         $client->rawRequest(
             'open.shop.info.get',
@@ -92,7 +91,7 @@ final class KwaiShopClientRawRequestTest extends TestCase
     public function testRawRequestTreatsJsonContentTypeWithCharsetAsJson(): void
     {
         $transport = new FakeTransport();
-        $client = new KwaiShopClient($this->makeConfig(), $transport);
+        $client = $this->makeClient($transport);
 
         $client->rawRequest(
             'open.demo.json',
@@ -112,12 +111,14 @@ final class KwaiShopClientRawRequestTest extends TestCase
         self::assertArrayNotHasKey('form_params', $transport->requests[0]['options']);
     }
 
-    private function makeConfig(): Config
+    private function makeClient(FakeTransport $transport): KwaiShopClient
     {
-        return new Config(
-            appKey: 'test-app-key',
-            appSecret: 'test-app-secret',
-            signSecret: 'test-sign-secret'
+        return new KwaiShopClient(
+            'test-app-key',
+            'test-app-secret',
+            'test-sign-secret',
+            [],
+            $transport
         );
     }
 }

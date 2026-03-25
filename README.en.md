@@ -106,11 +106,13 @@ declare(strict_types=1);
 use KwaiShopSDK\Exception\KwaiShopException;
 use KwaiShopSDK\Client\KwaiShopClient;
 
-$client = KwaiShopClient::make(
+$client = new KwaiShopClient(
     'your-app-key',
     'your-app-secret',
     'your-sign-secret',
-    'your-access-token',
+    [
+        'accessToken' => 'your-access-token',
+    ]
 );
 
 try {
@@ -125,7 +127,98 @@ try {
 }
 ```
 
+`KwaiShopClient` is created through the unified entrypoint `new KwaiShopClient($appKey, $appSecret, $signSecret, $options)`.
+
+- The fourth argument is an associative `options` array
+- Common options include `accessToken`, `baseUrl`, `connectTimeout`, `readTimeout`, `autoDetectRuntime`, `signMethod`, and `userAgent`
+
 Version `1.0.0` already includes the reusable SDK foundation and endpoint wrappers organized by official documentation category.
+
+## Hyperf Integration (Recommended)
+
+If your project runs on `Hyperf / Swoole Coroutine`, the recommended approach is to register `KwaiShopClient` once in the container so credential and runtime configuration stay centralized instead of being rebuilt in application code.
+
+Start with a dedicated config file such as `config/autoload/kwaishop.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use function Hyperf\Support\env;
+
+return [
+    'app_key' => env('KWAISHOP_APP_KEY', ''),
+    'app_secret' => env('KWAISHOP_APP_SECRET', ''),
+    'sign_secret' => env('KWAISHOP_SIGN_SECRET', ''),
+    'access_token' => env('KWAISHOP_ACCESS_TOKEN', ''),
+    'options' => [
+        'connectTimeout' => 5.0,
+        'readTimeout' => 10.0,
+        'autoDetectRuntime' => true,
+    ],
+];
+```
+
+Then register the client in `config/autoload/dependencies.php`:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use Hyperf\Contract\ConfigInterface;
+use KwaiShopSDK\Client\KwaiShopClient;
+use Psr\Container\ContainerInterface;
+
+return [
+    KwaiShopClient::class => static function (ContainerInterface $container): KwaiShopClient {
+        $config = $container->get(ConfigInterface::class)->get('kwaishop', []);
+        $options = is_array($config['options'] ?? null) ? $config['options'] : [];
+
+        if (($config['access_token'] ?? '') !== '') {
+            $options['accessToken'] = $config['access_token'];
+        }
+
+        return new KwaiShopClient(
+            (string) ($config['app_key'] ?? ''),
+            ($config['app_secret'] ?? null) !== null ? (string) $config['app_secret'] : null,
+            (string) ($config['sign_secret'] ?? ''),
+            $options
+        );
+    },
+];
+```
+
+Your application service can then rely on constructor injection directly:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\Service;
+
+use KwaiShopSDK\Client\KwaiShopClient;
+
+final class ShopService
+{
+    public function __construct(
+        private readonly KwaiShopClient $client,
+    ) {
+    }
+
+    public function getShopInfo(): array
+    {
+        return $this->client
+            ->OpenShopInfoGet()
+            ->setParams([])
+            ->send();
+    }
+}
+```
+
+If your Hyperf project already manages coroutine hooks, pooling, or runtime policy on its own, set `options.autoDetectRuntime` to `false` so the SDK does not try to auto-detect the runtime again.
 
 ## Runtime Compatibility
 
@@ -148,7 +241,7 @@ use Swoole\Runtime;
 
 Runtime::enableCoroutine(true);
 
-$client = KwaiShopClient::make(
+$client = new KwaiShopClient(
     'your-app-key',
     'your-app-secret',
     'your-sign-secret',
@@ -158,15 +251,16 @@ $client = KwaiShopClient::make(
 If you explicitly do not want the SDK to adapt the runtime automatically, you can disable it:
 
 ```php
-use KwaiShopSDK\Config\Config;
 use KwaiShopSDK\Client\KwaiShopClient;
 
-$client = new KwaiShopClient(new Config(
-    appKey: 'your-app-key',
-    appSecret: 'your-app-secret',
-    signSecret: 'your-sign-secret',
-    autoDetectRuntime: false,
-));
+$client = new KwaiShopClient(
+    'your-app-key',
+    'your-app-secret',
+    'your-sign-secret',
+    [
+        'autoDetectRuntime' => false,
+    ]
+);
 ```
 
 ## Authentication

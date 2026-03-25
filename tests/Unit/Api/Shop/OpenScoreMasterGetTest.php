@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace KwaiShopSDK\Tests\Unit\Api\Shop;
 
 use KwaiShopSDK\Api\Shop\OpenScoreMasterGet;
-use KwaiShopSDK\Config\Config;
 use KwaiShopSDK\Client\KwaiShopClient;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
 use PHPUnit\Framework\TestCase;
@@ -32,11 +31,10 @@ final class OpenScoreMasterGetTest extends TestCase
         ]);
 
         $client = new KwaiShopClient(
-            new Config(
-                appKey: 'test-app-key',
-                appSecret: 'test-app-secret',
-                signSecret: 'test-sign-secret'
-            ),
+            'test-app-key',
+            'test-app-secret',
+            'test-sign-secret',
+            [],
             $transport
         );
 

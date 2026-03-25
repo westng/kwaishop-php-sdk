@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Fixtures;
 
-use KwaiShopSDK\Config\Config;
-
 final class TestConfigFactory
 {
     /** Determine whether integration-test credentials are available. */
@@ -26,15 +24,40 @@ final class TestConfigFactory
             && self::nullableEnv('KWAISHOP_TEST_ACCESS_TOKEN') !== null;
     }
 
-    /** Build a test config using environment variables with local defaults. */
-    public static function make(): Config
+    /** Get the test app key using environment variables with local defaults. */
+    public static function appKey(): string
     {
-        return new Config(
-            appKey: self::env('KWAISHOP_TEST_APP_KEY', 'test-app-key'),
-            appSecret: self::env('KWAISHOP_TEST_APP_SECRET', 'test-app-secret'),
-            signSecret: self::env('KWAISHOP_TEST_SIGN_SECRET', 'test-sign-secret'),
-            baseUrl: self::env('KWAISHOP_TEST_BASE_URL', 'https://openapi.kwaixiaodian.com'),
-        );
+        return self::env('KWAISHOP_TEST_APP_KEY', 'test-app-key');
+    }
+
+    /** Get the test app secret using environment variables with local defaults. */
+    public static function appSecret(): string
+    {
+        return self::env('KWAISHOP_TEST_APP_SECRET', 'test-app-secret');
+    }
+
+    /** Get the test signing secret using environment variables with local defaults. */
+    public static function signSecret(): string
+    {
+        return self::env('KWAISHOP_TEST_SIGN_SECRET', 'test-sign-secret');
+    }
+
+    /**
+     * Build constructor options for test clients.
+     *
+     * @return array<string, string>
+     */
+    public static function clientOptions(?string $accessToken = null): array
+    {
+        $options = [
+            'baseUrl' => self::env('KWAISHOP_TEST_BASE_URL', 'https://openapi.kwaixiaodian.com'),
+        ];
+
+        if ($accessToken !== null) {
+            $options['accessToken'] = $accessToken;
+        }
+
+        return $options;
     }
 
     /** Get the test access token from the environment. */

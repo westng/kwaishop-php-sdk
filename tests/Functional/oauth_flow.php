@@ -41,7 +41,12 @@ if ($command === null) {
     exit(1);
 }
 
-$client = new KwaiShopClient(TestConfigFactory::make());
+$client = new KwaiShopClient(
+    TestConfigFactory::appKey(),
+    TestConfigFactory::appSecret(),
+    TestConfigFactory::signSecret(),
+    TestConfigFactory::clientOptions()
+);
 $oauth = $client->oauth();
 
 try {

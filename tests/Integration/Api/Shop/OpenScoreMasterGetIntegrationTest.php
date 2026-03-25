@@ -31,13 +31,11 @@ final class OpenScoreMasterGetIntegrationTest extends TestCase
             );
         }
 
-        $config = TestConfigFactory::make();
-        $client = KwaiShopClient::make(
-            $config->appKey(),
-            $config->requiredAppSecret(),
-            $config->signSecret(),
-            TestConfigFactory::accessToken(),
-            $config->baseUrl(),
+        $client = new KwaiShopClient(
+            TestConfigFactory::appKey(),
+            TestConfigFactory::appSecret(),
+            TestConfigFactory::signSecret(),
+            TestConfigFactory::clientOptions(TestConfigFactory::accessToken()),
         );
 
         try {

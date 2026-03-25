@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Config\Config;
 use KwaiShopSDK\Client\KwaiShopClient;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +22,7 @@ final class KwaiShopClientHttpMethodsTest extends TestCase
     public function testGetUsesQueryOptions(): void
     {
         $transport = new FakeTransport();
-        $client = new KwaiShopClient($this->makeConfig(), $transport);
+        $client = $this->makeClient($transport);
 
         $client->get('https://example.com', ['foo' => 'bar']);
 
@@ -34,7 +33,7 @@ final class KwaiShopClientHttpMethodsTest extends TestCase
     public function testPostJsonUsesJsonPayload(): void
     {
         $transport = new FakeTransport();
-        $client = new KwaiShopClient($this->makeConfig(), $transport);
+        $client = $this->makeClient($transport);
 
         $client->postJson('https://example.com', ['foo' => 'bar']);
 
@@ -46,7 +45,7 @@ final class KwaiShopClientHttpMethodsTest extends TestCase
     public function testUploadUsesMultipartPayload(): void
     {
         $transport = new FakeTransport();
-        $client = new KwaiShopClient($this->makeConfig(), $transport);
+        $client = $this->makeClient($transport);
 
         $client->upload('https://example.com', [
             [
@@ -61,12 +60,14 @@ final class KwaiShopClientHttpMethodsTest extends TestCase
         self::assertSame('demo.txt', $transport->requests[0]['options']['multipart'][0]['filename']);
     }
 
-    private function makeConfig(): Config
+    private function makeClient(FakeTransport $transport): KwaiShopClient
     {
-        return new Config(
-            appKey: 'test-app-key',
-            appSecret: 'test-app-secret',
-            signSecret: 'test-sign-secret'
+        return new KwaiShopClient(
+            'test-app-key',
+            'test-app-secret',
+            'test-sign-secret',
+            [],
+            $transport
         );
     }
 }

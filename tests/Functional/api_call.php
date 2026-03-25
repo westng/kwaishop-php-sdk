@@ -54,7 +54,12 @@ try {
         throw new InvalidArgumentException('params_json must decode to an object/array.');
     }
 
-    $client = new KwaiShopClient(TestConfigFactory::make());
+    $client = new KwaiShopClient(
+        TestConfigFactory::appKey(),
+        TestConfigFactory::appSecret(),
+        TestConfigFactory::signSecret(),
+        TestConfigFactory::clientOptions()
+    );
     $response = $client->rawRequest($method, $params, $accessToken, $version);
 
     fwrite(STDOUT, json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . PHP_EOL);
