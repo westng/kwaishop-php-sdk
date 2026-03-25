@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KwaiShopSDK 测试报告</title>
+    <style>
+        :root {
+            --bg: #f4f7fb;
+            --panel: #ffffff;
+            --text: #0f172a;
+            --muted: #667085;
+            --border: #d0d5dd;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 32px;
+            background: radial-gradient(circle at top, #e9f2ff 0%, var(--bg) 42%, #f8fafc 100%);
+            color: var(--text);
+            font: 14px/1.6 "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+            line-height: 1.2;
+        }
+        .meta {
+            color: var(--muted);
+        }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid #b54708;
+            color: #b54708;
+            background: #fffaeb;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+        .suite-card {
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: #fbfcfe;
+            padding: 16px;
+        }
+        .suite-label {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .suite-status {
+            display: inline-block;
+            margin-bottom: 10px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .suite-status-passed { background: #ecfdf3; color: #1f7a3d; }
+        .suite-status-skipped { background: #fffaeb; color: #b54708; }
+        .suite-status-empty { background: #eef2ff; color: #4338ca; }
+        .suite-status-failed { background: #fef3f2; color: #b42318; }
+        .suite-meta {
+            color: var(--muted);
+        }
+        .suite-section + .suite-section {
+            margin-top: 26px;
+        }
+        .suite-section h2 {
+            margin: 0 0 8px;
+            font-size: 18px;
+        }
+        .section-meta {
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+        .metric-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 12px 0;
+            color: var(--text);
+        }
+        code {
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: #f2f4f7;
+        }
+        pre {
+            margin: 0;
+            padding: 18px;
+            overflow: auto;
+            border-radius: 16px;
+            border: 1px solid #1e293b;
+            background: #0f172a;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .footer {
+            margin-top: 22px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="panel">
+            <div class="header">
+                <div>
+                    <h1>KwaiShopSDK 测试报告</h1>
+                    <div class="meta">生成时间：2026-03-25 08:57:04</div>
+                    <div class="meta">PHP 8.1.31 · PHPUnit 10.5.63 · 退出码 0</div>
+                </div>
+                <div class="status">通过（含空测试集）</div>
+            </div>
+
+            <div class="overview-grid">
+                <div class="suite-card">
+                <div class="suite-label">单元测试</div>
+                <div class="suite-status suite-status-passed">通过</div>
+                <div class="suite-meta">用例数：35</div>
+                <div class="suite-meta">断言数：89</div>
+                <div class="suite-meta">跳过数：-</div>
+            </div><div class="suite-card">
+                <div class="suite-label">集成测试</div>
+                <div class="suite-status suite-status-passed">通过</div>
+                <div class="suite-meta">用例数：1</div>
+                <div class="suite-meta">断言数：1</div>
+                <div class="suite-meta">跳过数：-</div>
+            </div><div class="suite-card">
+                <div class="suite-label">功能测试</div>
+                <div class="suite-status suite-status-empty">空测试集</div>
+                <div class="suite-meta">用例数：-</div>
+                <div class="suite-meta">断言数：-</div>
+                <div class="suite-meta">跳过数：-</div>
+            </div>
+            </div>
+
+            <section class="suite-section">
+                <h2>单元测试</h2>
+                <div class="section-meta">PHPUnit 单元测试</div>
+                <div class="section-meta">执行命令：<code>/Applications/MAMP/bin/php/php8.1.31/bin/php /Users/west/kwaishop-php-sdk/vendor/phpunit/phpunit/phpunit --configuration /Users/west/kwaishop-php-sdk/phpunit.xml --testsuite unit</code></div>
+                <div class="metric-row">
+                    <span>退出码：0</span>
+                    <span>用例数：35</span>
+                    <span>断言数：89</span>
+                    <span>跳过数：-</span>
+                    <span>失败数：-</span>
+                    <span>错误数：-</span>
+                </div>
+                <pre>PHPUnit 10.5.63 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.1.31
+Configuration: /Users/west/kwaishop-php-sdk/phpunit.xml
+
+...................................                               35 / 35 (100%)
+
+Time: 00:00.035, Memory: 6.00 MB
+
+OK (35 tests, 89 assertions)</pre>
+            </section><section class="suite-section">
+                <h2>集成测试</h2>
+                <div class="section-meta">PHPUnit 集成测试</div>
+                <div class="section-meta">执行命令：<code>/Applications/MAMP/bin/php/php8.1.31/bin/php /Users/west/kwaishop-php-sdk/vendor/phpunit/phpunit/phpunit --configuration /Users/west/kwaishop-php-sdk/phpunit.xml --testsuite integration</code></div>
+                <div class="metric-row">
+                    <span>退出码：0</span>
+                    <span>用例数：1</span>
+                    <span>断言数：1</span>
+                    <span>跳过数：-</span>
+                    <span>失败数：-</span>
+                    <span>错误数：-</span>
+                </div>
+                <pre>PHPUnit 10.5.63 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.1.31
+Configuration: /Users/west/kwaishop-php-sdk/phpunit.xml
+
+OpenScoreMasterGet API Response
+{
+    &quot;result&quot;: 1,
+    &quot;msg&quot;: &quot;success&quot;,
+    &quot;error_msg&quot;: &quot;ok&quot;,
+    &quot;code&quot;: &quot;1&quot;,
+    &quot;data&quot;: {
+        &quot;summary&quot;: {
+            &quot;scoreStr&quot;: &quot;4.78&quot;,
+            &quot;showName&quot;: &quot;带货口碑分&quot;,
+            &quot;hasData&quot;: true
+        },
+        &quot;hasData&quot;: true,
+        &quot;scoreDim&quot;: [
+            {
+                &quot;dimName&quot;: &quot;内容力&quot;,
+                &quot;dimScoreStr&quot;: &quot;4.81&quot;
+            },
+            {
+                &quot;dimName&quot;: &quot;商品力&quot;,
+                &quot;dimScoreStr&quot;: &quot;4.77&quot;
+            },
+            {
+                &quot;dimName&quot;: &quot;勤奋力&quot;,
+                &quot;dimScoreStr&quot;: &quot;4.60&quot;
+            },
+            {
+                &quot;dimName&quot;: &quot;带货竞争力&quot;,
+                &quot;dimScoreStr&quot;: &quot;4.60&quot;
+            }
+        ]
+    },
+    &quot;requestId&quot;: &quot;774429024517495007&quot;,
+    &quot;sub_msg&quot;: &quot;ok&quot;,
+    &quot;sub_code&quot;: &quot;1&quot;
+}
+.                                                                   1 / 1 (100%)
+
+Time: 00:00.274, Memory: 6.00 MB
+
+OK (1 test, 1 assertion)</pre>
+            </section><section class="suite-section">
+                <h2>功能测试</h2>
+                <div class="section-meta">PHPUnit 功能测试套件</div>
+                <div class="section-meta">执行命令：<code>/Applications/MAMP/bin/php/php8.1.31/bin/php /Users/west/kwaishop-php-sdk/vendor/phpunit/phpunit/phpunit --configuration /Users/west/kwaishop-php-sdk/phpunit.xml --testsuite functional</code></div>
+                <div class="metric-row">
+                    <span>退出码：0</span>
+                    <span>用例数：-</span>
+                    <span>断言数：-</span>
+                    <span>跳过数：-</span>
+                    <span>失败数：-</span>
+                    <span>错误数：-</span>
+                </div>
+                <pre>PHPUnit 10.5.63 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.1.31
+Configuration: /Users/west/kwaishop-php-sdk/phpunit.xml
+
+No tests executed!</pre>
+            </section>
+
+            <section class="suite-section">
+                    <h2>接口返回数据</h2>
+                    <div class="section-meta">接口标识：open-score-master-get-integration</div>
+                    <pre>{
+    &quot;result&quot;: 1,
+    &quot;msg&quot;: &quot;success&quot;,
+    &quot;error_msg&quot;: &quot;ok&quot;,
+    &quot;code&quot;: &quot;1&quot;,
+    &quot;data&quot;: {
+        &quot;summary&quot;: {
+            &quot;scoreStr&quot;: &quot;4.78&quot;,
+            &quot;showName&quot;: &quot;带货口碑分&quot;,
+            &quot;hasData&quot;: true
+        },
+        &quot;hasData&quot;: true,
+        &quot;scoreDim&quot;: [
+            {
+                &quot;dimName&quot;: &quot;内容力&quot;,
+                &quot;dimScoreStr&quot;: &quot;4.81&quot;
+            },
+            {
+                &quot;dimName&quot;: &quot;商品力&quot;,
+                &quot;dimScoreStr&quot;: &quot;4.77&quot;
+            },
+            {
+                &quot;dimName&quot;: &quot;勤奋力&quot;,
+                &quot;dimScoreStr&quot;: &quot;4.60&quot;
+            },
+            {
+                &quot;dimName&quot;: &quot;带货竞争力&quot;,
+                &quot;dimScoreStr&quot;: &quot;4.60&quot;
+            }
+        ]
+    },
+    &quot;requestId&quot;: &quot;774429024517495007&quot;,
+    &quot;sub_msg&quot;: &quot;ok&quot;,
+    &quot;sub_code&quot;: &quot;1&quot;
+}</pre>
+                </section>
+
+            <div class="footer">该报告由 composer test 自动生成。报告文件：test-report.html</div>
+        </div>
+    </div>
+</body>
+</html>

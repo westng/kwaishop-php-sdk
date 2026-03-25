@@ -4,3 +4,4 @@
 /.env
 /.idea/
 /docs/
+/.test-artifacts/
