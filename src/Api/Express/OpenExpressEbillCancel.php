@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Api\Express;
 
-use KwaiShopSDK\Core\RpcRequest;
+use KwaiShopSDK\Client\RpcRequest;
 
 /**
  * 取消电子面单号

@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Api\Security;
 
-use KwaiShopSDK\Core\RpcRequest;
+use KwaiShopSDK\Client\RpcRequest;
 
 /**
  * 日志批量上传接口

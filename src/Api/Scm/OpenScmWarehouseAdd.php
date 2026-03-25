@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Api\Scm;
 
-use KwaiShopSDK\Core\RpcRequest;
+use KwaiShopSDK\Client\RpcRequest;
 
 /**
  * 添加仓库

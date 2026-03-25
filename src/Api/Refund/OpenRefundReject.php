@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Api\Refund;
 
-use KwaiShopSDK\Core\RpcRequest;
+use KwaiShopSDK\Client\RpcRequest;
 
 /**
  * 商家拒绝收货退款

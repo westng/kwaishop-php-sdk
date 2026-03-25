@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Api\Express;
 
-use KwaiShopSDK\Core\RpcRequest;
+use KwaiShopSDK\Client\RpcRequest;
 
 /**
  * 追加电子面单子单

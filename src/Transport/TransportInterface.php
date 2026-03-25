@@ -11,11 +11,13 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core\Http;
+namespace KwaiShopSDK\Transport;
 
 interface TransportInterface
 {
     /**
+     * Send an HTTP request and return the raw transport response.
+     *
      * @param array<string, mixed> $options
      *
      * @return array{status:int, headers:array<string, mixed>, body:string}

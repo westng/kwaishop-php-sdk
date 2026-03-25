@@ -16,6 +16,8 @@ namespace KwaiShopSDK\Exception;
 class BusinessException extends KwaiShopException
 {
     /**
+     * Create a business-level gateway exception.
+     *
      * @param array<string, mixed> $payload
      */
     public function __construct(
@@ -23,21 +25,26 @@ class BusinessException extends KwaiShopException
         private readonly ?int $primaryCode = null,
         private readonly ?int $secondaryCode = null,
         private readonly array $payload = [],
+        ?string $rawResponseBody = null,
     ) {
-        parent::__construct($message, $primaryCode ?? 0);
+        parent::__construct($message, $primaryCode ?? 0, rawResponseBody: $rawResponseBody);
     }
 
+    /** Get the primary platform status code. */
     public function primaryCode(): ?int
     {
         return $this->primaryCode;
     }
 
+    /** Get the secondary platform status code. */
     public function secondaryCode(): ?int
     {
         return $this->secondaryCode;
     }
 
     /**
+     * Get the decoded response payload that produced the exception.
+     *
      * @return array<string, mixed>
      */
     public function payload(): array

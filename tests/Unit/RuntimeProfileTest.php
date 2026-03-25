@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Core\Runtime\RuntimeProfile;
+use KwaiShopSDK\Runtime\RuntimeProfile;
 use PHPUnit\Framework\TestCase;
 
 final class RuntimeProfileTest extends TestCase

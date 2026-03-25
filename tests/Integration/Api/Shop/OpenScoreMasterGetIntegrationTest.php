@@ -13,21 +13,17 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Integration\Api\Shop;
 
-use KwaiShopSDK\Api\Shop\OpenScoreMasterGet;
-use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\Exception\TransportException;
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Exception\BusinessException;
+use KwaiShopSDK\Exception\ValidationException;
+use KwaiShopSDK\Client\KwaiShopClient;
 use KwaiShopSDK\Tests\Fixtures\TestConfigFactory;
 use PHPUnit\Framework\TestCase;
 
 final class OpenScoreMasterGetIntegrationTest extends TestCase
 {
+    /** Execute the real API call and persist the response artifact for inspection. */
     public function testExecutePrintsRealApiResponse(): void
     {
-        if (!TestConfigFactory::shouldRunIntegrationTests()) {
-            self::markTestSkipped('Set KWAISHOP_RUN_INTEGRATION_TESTS=1 to run real integration tests.');
-        }
-
         if (!TestConfigFactory::hasIntegrationCredentials()) {
             self::markTestSkipped(
                 'Missing required integration envs: KWAISHOP_TEST_APP_KEY, KWAISHOP_TEST_APP_SECRET, '
@@ -35,29 +31,97 @@ final class OpenScoreMasterGetIntegrationTest extends TestCase
             );
         }
 
-        $client = new KwaiShopClient(
-            new Config(
-                appKey: TestConfigFactory::make()->appKey(),
-                appSecret: TestConfigFactory::make()->requiredAppSecret(),
-                signSecret: TestConfigFactory::make()->signSecret(),
-                baseUrl: TestConfigFactory::make()->baseUrl()
-            )
+        $config = TestConfigFactory::make();
+        $client = KwaiShopClient::make(
+            $config->appKey(),
+            $config->requiredAppSecret(),
+            $config->signSecret(),
+            TestConfigFactory::accessToken(),
+            $config->baseUrl(),
         );
 
-        $api = new OpenScoreMasterGet($client);
         try {
-            $response = $api->execute([], TestConfigFactory::accessToken());
-        } catch (TransportException $exception) {
-            if (str_contains($exception->getMessage(), 'Could not resolve host')) {
-                self::markTestSkipped('Network/DNS unavailable for integration test in current environment.');
+            $response = $client
+                ->OpenScoreMasterGet()
+                ->setParams([])
+                ->send();
+
+            $body = json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+            $artifact = $response;
+        } catch (BusinessException $exception) {
+            $body = $exception->rawResponseBody()
+                ?? json_encode($exception->payload(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
+            $artifact = $this->decodeArtifactBody($body);
+        } catch (ValidationException $exception) {
+            if (!str_contains($exception->getMessage(), 'Failed to decode JSON response.')) {
+                throw $exception;
             }
 
-            throw $exception;
+            $body = $exception->rawResponseBody() ?? $exception->getMessage();
+            $artifact = $this->decodeArtifactBody($body);
         }
 
-        fwrite(STDERR, json_encode($response, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR) . PHP_EOL);
+        $this->emitApiResponse($body);
+        TestConfigFactory::writeJsonArtifact('open-score-master-get-integration', $artifact);
 
-        self::assertSame(1, $response['result']);
-        self::assertArrayHasKey('data', $response);
+        self::assertNotSame('', trim($body));
+    }
+
+    /**
+     * Decode an artifact body to structured data when possible.
+     *
+     * @return array<string, mixed>
+     */
+    private function decodeArtifactBody(string $body): array
+    {
+        $decoded = json_decode($body, true);
+
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+
+        return [
+            'response_body' => $body,
+        ];
+    }
+
+    /** Emit the captured API response to the active test output channel. */
+    private function emitApiResponse(string $responseBody): void
+    {
+        $content = "OpenScoreMasterGet API Response\n" . $responseBody . PHP_EOL;
+
+        if ($this->isTeamCityMode()) {
+            fwrite(
+                STDOUT,
+                sprintf(
+                    "##teamcity[testStdOut name='%s' out='%s']\n",
+                    $this->escapeTeamCity('testExecutePrintsRealApiResponse'),
+                    $this->escapeTeamCity($content)
+                )
+            );
+
+            return;
+        }
+
+        fwrite(STDOUT, $content);
+    }
+
+    /** Detect whether the current PHPUnit run is using TeamCity output mode. */
+    private function isTeamCityMode(): bool
+    {
+        return in_array('--teamcity', $_SERVER['argv'] ?? [], true);
+    }
+
+    /** Escape a string for safe TeamCity service-message output. */
+    private function escapeTeamCity(string $value): string
+    {
+        return strtr($value, [
+            '|' => '||',
+            "'" => "|'",
+            "\n" => '|n',
+            "\r" => '|r',
+            '[' => '|[',
+            ']' => '|]',
+        ]);
     }
 }

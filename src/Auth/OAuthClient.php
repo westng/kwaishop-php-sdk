@@ -11,16 +11,17 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core\Auth;
+namespace KwaiShopSDK\Auth;
 
-use KwaiShopSDK\Core\Http\TransportInterface;
-use KwaiShopSDK\Core\Pipeline\ResponseParser;
-use KwaiShopSDK\Core\Profile\Config;
+use KwaiShopSDK\Transport\TransportInterface;
+use KwaiShopSDK\Client\Pipeline\ResponseParser;
+use KwaiShopSDK\Config\Config;
 use KwaiShopSDK\Exception\ValidationException;
 use KwaiShopSDK\Support\Arr;
 
 final class OAuthClient
 {
+    /** Create an OAuth client backed by the shared transport pipeline. */
     public function __construct(
         private readonly Config $config,
         private readonly TransportInterface $transport,
@@ -29,6 +30,8 @@ final class OAuthClient
     }
 
     /**
+     * Build the platform authorization URL for an OAuth redirect flow.
+     *
      * @param list<string> $scopes
      */
     public function buildAuthorizeUrl(string $redirectUri, array $scopes, ?string $state = null): string
@@ -44,6 +47,7 @@ final class OAuthClient
         return $this->config->oauthAuthorizeUrl() . '?' . http_build_query(Arr::withoutNulls($query));
     }
 
+    /** Exchange an authorization code for an access token. */
     public function getAccessToken(string $code): TokenResponse
     {
         return $this->requestToken(
@@ -57,6 +61,7 @@ final class OAuthClient
         );
     }
 
+    /** Refresh an access token using a refresh token. */
     public function refreshAccessToken(string $refreshToken): TokenResponse
     {
         return $this->requestToken(
@@ -70,6 +75,7 @@ final class OAuthClient
         );
     }
 
+    /** Request a client-credentials token for app-level access. */
     public function getClientCredentialsToken(): TokenResponse
     {
         return $this->requestToken(
@@ -82,6 +88,13 @@ final class OAuthClient
         );
     }
 
+    /**
+     * Send an OAuth token request and normalize the response payload.
+     *
+     * @param array<string, string> $params
+     *
+     * @throws ValidationException
+     */
     private function requestToken(string $url, array $params): TokenResponse
     {
         $response = $this->transport->send('POST', $url, [

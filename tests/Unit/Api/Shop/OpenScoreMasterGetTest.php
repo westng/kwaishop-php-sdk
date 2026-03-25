@@ -14,8 +14,8 @@ declare(strict_types=1);
 namespace KwaiShopSDK\Tests\Unit\Api\Shop;
 
 use KwaiShopSDK\Api\Shop\OpenScoreMasterGet;
-use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Config\Config;
+use KwaiShopSDK\Client\KwaiShopClient;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
 use PHPUnit\Framework\TestCase;
 
@@ -45,7 +45,7 @@ final class OpenScoreMasterGetTest extends TestCase
 
         self::assertSame(1, $response['result']);
         self::assertSame('GET', $transport->requests[0]['method']);
-        self::assertSame('https://openapi.kwaixiaodian.com', $transport->requests[0]['url']);
+        self::assertSame('https://openapi.kwaixiaodian.com/open/score/master/get', $transport->requests[0]['url']);
         self::assertSame('open.score.master.get', $transport->requests[0]['options']['query']['method']);
         self::assertSame('test-access-token', $transport->requests[0]['options']['query']['access_token']);
         self::assertSame('application/json', $transport->requests[0]['options']['headers']['Content-Type'] ?? 'application/json');

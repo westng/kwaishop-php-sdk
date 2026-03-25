@@ -44,9 +44,10 @@
         }
     },
     "scripts": {
+        "generate:api-client": "php scripts/generate-api-client-methods.php",
         "cs-fix": "php-cs-fixer fix --config=.php-cs-fixer.php",
         "cs-check": "php-cs-fixer fix --config=.php-cs-fixer.php --dry-run --diff",
-        "test": "phpunit --testsuite default"
+        "test": "php scripts/run-tests-with-report.php"
     },
     "minimum-stability": "stable",
     "prefer-stable": true

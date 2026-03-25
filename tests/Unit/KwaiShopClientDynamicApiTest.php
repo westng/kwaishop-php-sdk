@@ -13,14 +13,32 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Core\Profile\Config;
+use KwaiShopSDK\Config\Config;
 use KwaiShopSDK\Exception\ValidationException;
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Client\KwaiShopClient;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
 use PHPUnit\Framework\TestCase;
 
 final class KwaiShopClientDynamicApiTest extends TestCase
 {
+    public function testClientCanBeConstructedWithDirectCredentials(): void
+    {
+        $transport = new FakeTransport();
+        $client = KwaiShopClient::make(
+            'test-app-key',
+            'test-app-secret',
+            'test-sign-secret',
+            'default-token',
+            null,
+            $transport
+        );
+
+        $response = $client->OpenShopInfoGet()->send();
+
+        self::assertSame(1, $response['result']);
+        self::assertSame('default-token', $transport->requests[0]['options']['query']['access_token']);
+    }
+
     public function testDynamicApiMethodUsesDefaultAccessTokenFromConfig(): void
     {
         $transport = new FakeTransport();

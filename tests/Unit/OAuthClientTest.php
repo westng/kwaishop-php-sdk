@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Core\Auth\OAuthClient;
-use KwaiShopSDK\Core\Pipeline\ResponseParser;
-use KwaiShopSDK\Core\Profile\Config;
+use KwaiShopSDK\Auth\OAuthClient;
+use KwaiShopSDK\Client\Pipeline\ResponseParser;
+use KwaiShopSDK\Config\Config;
 use KwaiShopSDK\Exception\ValidationException;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
 use PHPUnit\Framework\TestCase;

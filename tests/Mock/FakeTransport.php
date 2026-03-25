@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Mock;
 
-use KwaiShopSDK\Core\Http\TransportInterface;
+use KwaiShopSDK\Transport\TransportInterface;
 
 final class FakeTransport implements TransportInterface
 {
@@ -23,6 +23,8 @@ final class FakeTransport implements TransportInterface
     public array $requests = [];
 
     /**
+     * Create a fake transport with an optional queued response list.
+     *
      * @param list<array{status:int, headers:array<string, mixed>, body:string}> $responses
      */
     public function __construct(
@@ -30,6 +32,7 @@ final class FakeTransport implements TransportInterface
     ) {
     }
 
+    /** {@inheritDoc} */
     public function send(string $httpMethod, string $url, array $options = []): array
     {
         $this->requests[] = [

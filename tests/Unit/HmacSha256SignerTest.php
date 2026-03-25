@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Core\Signing\HmacSha256Signer;
+use KwaiShopSDK\Signing\HmacSha256Signer;
 use PHPUnit\Framework\TestCase;
 
 final class HmacSha256SignerTest extends TestCase

@@ -11,18 +11,19 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core\Http;
+namespace KwaiShopSDK\Transport;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
-use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\Core\Runtime\RuntimeProfile;
+use KwaiShopSDK\Config\Config;
+use KwaiShopSDK\Runtime\RuntimeProfile;
 use KwaiShopSDK\Exception\TransportException;
 
 final class GuzzleTransport implements TransportInterface
 {
     private readonly RuntimeProfile $runtime;
 
+    /** Create a transport adapter backed by Guzzle. */
     public function __construct(
         private readonly ClientInterface $client,
         private readonly Config $config,
@@ -36,6 +37,11 @@ final class GuzzleTransport implements TransportInterface
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws TransportException
+     */
     public function send(string $httpMethod, string $url, array $options = []): array
     {
         try {
@@ -72,6 +78,8 @@ final class GuzzleTransport implements TransportInterface
     }
 
     /**
+     * Apply runtime-specific connection reuse options.
+     *
      * @param array<string, mixed> $options
      *
      * @return array<string, mixed>

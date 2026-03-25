@@ -70,23 +70,24 @@ src/
 │   ├── Tool/               # 工具类开放能力 API
 │   ├── User/               # 用户 / 商家信息 API
 │   └── Virtual/            # 虚拟商品 API
-├── Core/                   # SDK 核心基础设施
-│   ├── Auth/               # OAuth 鉴权与 Token 对象
-│   ├── Http/               # HTTP 传输抽象与 Guzzle 实现
-│   ├── Pipeline/           # 请求构建与响应解析流水线
-│   ├── Profile/            # 配置对象与运行参数
-│   ├── Runtime/            # FPM / CLI / Swoole 运行时识别
-│   └── Signing/            # MD5 / HMAC_SHA256 签名实现
+├── Auth/                   # OAuth 鉴权与 Token 对象
+├── Client/                 # SDK 主客户端、请求基座与请求流水线
+│   └── Pipeline/           # 请求构建与响应解析流水线
+├── Config/                 # 配置对象
 ├── Exception/              # SDK 异常体系
+├── Generated/              # 自动生成的客户端方法映射
+├── Runtime/                # FPM / CLI / Swoole 运行时识别
+├── Signing/                # MD5 / HMAC_SHA256 签名实现
 ├── Support/                # 通用辅助工具
-└── KwaiShopClient.php      # SDK 主客户端入口
+└── Transport/              # HTTP 传输抽象与 Guzzle 实现
 ```
 
 说明：
 
 - `Api/*` 目录按官方文档分类组织，方便快速定位对应接口
-- `Core/*` 目录提供签名、鉴权、请求、响应解析等底层能力
-- `KwaiShopClient.php` 是 SDK 的统一调用入口
+- `Client/*` 目录提供 SDK 入口、请求抽象与请求处理流水线
+- `Generated/*` 目录用于承载自动生成的客户端方法映射
+- `KwaiShopClient` 当前位于 `KwaiShopSDK\Client\KwaiShopClient`
 - 如果你想查看某个接口是否已封装，优先到对应分类目录中检索
 
 ## 安装
@@ -102,18 +103,15 @@ composer require westng/kwaishop-php-sdk
 
 declare(strict_types=1);
 
-use KwaiShopSDK\Core\Profile\Config;
 use KwaiShopSDK\Exception\KwaiShopException;
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Client\KwaiShopClient;
 
-$config = new Config(
-    appKey: 'your-app-key',
-    appSecret: 'your-app-secret',
-    signSecret: 'your-sign-secret',
-    accessToken: 'your-access-token',
+$client = KwaiShopClient::make(
+    'your-app-key',
+    'your-app-secret',
+    'your-sign-secret',
+    'your-access-token',
 );
-
-$client = new KwaiShopClient($config);
 
 try {
     $response = $client
@@ -145,30 +143,30 @@ try {
 ### Swoole Coroutine 示例
 
 ```php
-use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Client\KwaiShopClient;
 use Swoole\Runtime;
 
 Runtime::enableCoroutine(true);
 
-$config = new Config(
-    appKey: 'your-app-key',
-    appSecret: 'your-app-secret',
-    signSecret: 'your-sign-secret',
+$client = KwaiShopClient::make(
+    'your-app-key',
+    'your-app-secret',
+    'your-sign-secret',
 );
-
-$client = new KwaiShopClient($config);
 ```
 
 如果你明确不希望 SDK 自动处理运行时识别，可以关闭：
 
 ```php
-$config = new Config(
+use KwaiShopSDK\Config\Config;
+use KwaiShopSDK\Client\KwaiShopClient;
+
+$client = new KwaiShopClient(new Config(
     appKey: 'your-app-key',
     appSecret: 'your-app-secret',
     signSecret: 'your-sign-secret',
     autoDetectRuntime: false,
-);
+));
 ```
 
 ## 认证与授权
@@ -255,6 +253,12 @@ SDK 当前提供的 OAuth 能力包括：
 composer test
 ```
 
+执行完成后会自动生成 HTML 测试报告：
+
+```text
+test-report.html
+```
+
 运行单元测试：
 
 ```bash
@@ -262,12 +266,6 @@ composer test
 ```
 
 运行集成测试：
-
-```bash
-KWAISHOP_RUN_INTEGRATION_TESTS=1 ./vendor/bin/phpunit --testsuite integration
-```
-
-或先在 `.env` 中配置真实凭据后执行：
 
 ```bash
 ./vendor/bin/phpunit --testsuite integration
@@ -294,8 +292,9 @@ composer cs-fix
 
 说明：
 
-- 集成测试默认需要显式开启 `KWAISHOP_RUN_INTEGRATION_TESTS=1`
+- `composer test` 默认会包含集成测试
 - 运行集成测试前请先在 `.env` 中配置真实的测试凭据
+- `composer test` 会自动生成最新的 HTML 测试报告
 
 ## 开源协议
 

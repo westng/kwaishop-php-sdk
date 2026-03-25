@@ -11,7 +11,7 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core\Profile;
+namespace KwaiShopSDK\Config;
 
 use KwaiShopSDK\Exception\ValidationException;
 
@@ -20,6 +20,11 @@ final class Config
     public const SIGN_METHOD_MD5 = 'MD5';
     public const SIGN_METHOD_HMAC_SHA256 = 'HMAC_SHA256';
 
+    /**
+     * Create an immutable SDK configuration object.
+     *
+     * @throws ValidationException
+     */
     public function __construct(
         private readonly string $appKey,
         private readonly ?string $appSecret,
@@ -61,6 +66,8 @@ final class Config
     }
 
     /**
+     * Build a config instance from an associative array.
+     *
      * @param array<string, mixed> $config
      */
     public static function fromArray(array $config): self
@@ -82,16 +89,23 @@ final class Config
         );
     }
 
+    /** Get the application key. */
     public function appKey(): string
     {
         return $this->appKey;
     }
 
+    /** Get the optional application secret. */
     public function appSecret(): ?string
     {
         return $this->appSecret;
     }
 
+    /**
+     * Get the application secret or fail when OAuth is not configured.
+     *
+     * @throws ValidationException
+     */
     public function requiredAppSecret(): string
     {
         if ($this->appSecret === null) {
@@ -101,61 +115,77 @@ final class Config
         return $this->appSecret;
     }
 
+    /** Get the signing secret. */
     public function signSecret(): string
     {
         return $this->signSecret;
     }
 
+    /** Get the default access token. */
     public function accessToken(): ?string
     {
         return $this->accessToken;
     }
 
+    /** Get the normalized gateway base URL. */
     public function baseUrl(): string
     {
         return rtrim($this->baseUrl, '/');
     }
 
+    /** Get the OAuth authorization endpoint. */
     public function oauthAuthorizeUrl(): string
     {
         return $this->oauthAuthorizeUrl;
     }
 
+    /** Get the OAuth access-token endpoint. */
     public function oauthAccessTokenUrl(): string
     {
         return $this->oauthAccessTokenUrl;
     }
 
+    /** Get the OAuth refresh-token endpoint. */
     public function oauthRefreshTokenUrl(): string
     {
         return $this->oauthRefreshTokenUrl;
     }
 
+    /** Get the configured signature algorithm name. */
     public function signMethod(): string
     {
         return $this->signMethod;
     }
 
+    /** Get the connection timeout in seconds. */
     public function connectTimeout(): float
     {
         return $this->connectTimeout;
     }
 
+    /** Get the read timeout in seconds. */
     public function readTimeout(): float
     {
         return $this->readTimeout;
     }
 
+    /** Get the SDK user-agent string. */
     public function userAgent(): string
     {
         return $this->userAgent;
     }
 
+    /** Determine whether runtime auto-detection is enabled. */
     public function autoDetectRuntime(): bool
     {
         return $this->autoDetectRuntime;
     }
 
+    /**
+     * Validate that a required string value is not blank.
+     *
+     * @throws ValidationException
+     */
     private function assertNonEmpty(string $value, string $field): void
     {
         if (trim($value) === '') {

@@ -11,18 +11,20 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core\Signing;
+namespace KwaiShopSDK\Signing;
 
-final class Md5Signer implements SignerInterface
+final class HmacSha256Signer implements SignerInterface
 {
     public function sign(array $parameters, string $signSecret): string
     {
-        return md5($this->buildInput($parameters, $signSecret));
+        $input = $this->buildInput($parameters, $signSecret);
+
+        return base64_encode(hash_hmac('sha256', $input, $signSecret, true));
     }
 
     public function name(): string
     {
-        return 'MD5';
+        return 'HMAC_SHA256';
     }
 
     /**

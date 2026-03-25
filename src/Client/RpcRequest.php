@@ -11,10 +11,10 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core;
+namespace KwaiShopSDK\Client;
 
 use KwaiShopSDK\Exception\ValidationException;
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Client\KwaiShopClient;
 
 abstract class RpcRequest
 {
@@ -29,7 +29,11 @@ abstract class RpcRequest
     }
 
     /**
+     * Execute the RPC request against the gateway.
+     *
      * @param array<string, mixed> $params
+     *
+     * @throws ValidationException
      *
      * @return array<string, mixed>
      */
@@ -51,6 +55,8 @@ abstract class RpcRequest
     }
 
     /**
+     * Provide additional transport options for this request.
+     *
      * @param array<string, mixed> $params
      *
      * @return array<string, mixed>

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core\Pipeline;
+namespace KwaiShopSDK\Client\Pipeline;
 
 use KwaiShopSDK\Exception\AuthenticationException;
 use KwaiShopSDK\Exception\AuthorizationException;
@@ -26,6 +26,8 @@ use KwaiShopSDK\Support\Json;
 final class ResponseParser
 {
     /**
+     * Parse a gateway response and map failures to domain exceptions.
+     *
      * @return array<string, mixed>
      */
     public function parse(int $httpStatus, string $body): array
@@ -62,6 +64,8 @@ final class ResponseParser
     }
 
     /**
+     * Resolve the primary platform status code from a decoded payload.
+     *
      * @param array<string, mixed> $payload
      */
     private function primaryCode(array $payload): ?int
@@ -76,6 +80,8 @@ final class ResponseParser
     }
 
     /**
+     * Resolve the secondary platform status code from a decoded payload.
+     *
      * @param array<string, mixed> $payload
      */
     private function secondaryCode(array $payload): ?int
@@ -89,12 +95,15 @@ final class ResponseParser
         return (int) $value;
     }
 
+    /** Determine whether a primary platform code represents success. */
     private function isSuccess(?int $primaryCode): bool
     {
         return $primaryCode === null || in_array($primaryCode, [1, 200], true);
     }
 
     /**
+     * Map a parsed gateway failure to a typed SDK exception.
+     *
      * @param array<string, mixed> $payload
      */
     private function mapException(string $message, ?int $primaryCode, ?int $secondaryCode, array $payload, string $rawResponseBody): BusinessException
@@ -109,6 +118,8 @@ final class ResponseParser
     }
 
     /**
+     * Decode the response payload while preserving transport-level context.
+     *
      * @return array<string, mixed>
      */
     private function decodePayload(int $httpStatus, string $body): array

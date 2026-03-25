@@ -11,12 +11,12 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core\Pipeline;
+namespace KwaiShopSDK\Client\Pipeline;
 
-use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\Core\Signing\HmacSha256Signer;
-use KwaiShopSDK\Core\Signing\Md5Signer;
-use KwaiShopSDK\Core\Signing\SignerInterface;
+use KwaiShopSDK\Config\Config;
+use KwaiShopSDK\Signing\HmacSha256Signer;
+use KwaiShopSDK\Signing\Md5Signer;
+use KwaiShopSDK\Signing\SignerInterface;
 use KwaiShopSDK\Support\Clock;
 use KwaiShopSDK\Support\Json;
 
@@ -24,6 +24,7 @@ final class RequestFactory
 {
     private readonly SignerInterface $resolvedSigner;
 
+    /** Create a request factory for signed gateway calls. */
     public function __construct(
         private readonly Config $config,
         ?SignerInterface $signer = null,
@@ -36,6 +37,8 @@ final class RequestFactory
     }
 
     /**
+     * Build the signed gateway URL and parameter payload for an RPC method.
+     *
      * @param array<string, mixed> $params
      *
      * @return array{url:string, params:array<string, scalar|null>}
@@ -61,11 +64,13 @@ final class RequestFactory
         ];
     }
 
+    /** Convert a dotted RPC method name into the gateway URL path. */
     private function buildApiUrl(string $method): string
     {
         return rtrim($this->config->baseUrl(), '/') . '/' . str_replace('.', '/', ltrim($method, '/'));
     }
 
+    /** Get the signer configured for this factory. */
     private function signer(): SignerInterface
     {
         return $this->resolvedSigner;

@@ -15,6 +15,7 @@ namespace KwaiShopSDK\Support;
 
 final class Clock
 {
+    /** Get the current Unix timestamp in milliseconds as a string. */
     public static function currentMilliseconds(): string
     {
         return (string) (int) floor(microtime(true) * 1000);

@@ -11,11 +11,13 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core;
+namespace KwaiShopSDK\Client;
 
 final class PendingRequest
 {
     /**
+     * Create a lazily configured RPC request wrapper.
+     *
      * @param array<string, mixed> $params
      */
     public function __construct(
@@ -26,6 +28,8 @@ final class PendingRequest
     }
 
     /**
+     * Replace the full parameter payload for the pending request.
+     *
      * @param array<string, mixed> $params
      */
     public function setParams(array $params): self
@@ -36,6 +40,8 @@ final class PendingRequest
     }
 
     /**
+     * Merge new parameters into the existing pending request payload.
+     *
      * @param array<string, mixed> $params
      */
     public function mergeParams(array $params): self
@@ -45,6 +51,7 @@ final class PendingRequest
         return $this;
     }
 
+    /** Override the access token used when executing the pending request. */
     public function setAccessToken(?string $accessToken): self
     {
         $this->accessToken = $accessToken;
@@ -53,6 +60,8 @@ final class PendingRequest
     }
 
     /**
+     * Execute the underlying RPC request with the accumulated state.
+     *
      * @return array<string, mixed>
      */
     public function send(): array

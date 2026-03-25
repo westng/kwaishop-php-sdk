@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Core\Pipeline\RequestFactory;
-use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\Core\Signing\Md5Signer;
+use KwaiShopSDK\Client\Pipeline\RequestFactory;
+use KwaiShopSDK\Config\Config;
+use KwaiShopSDK\Signing\Md5Signer;
 use PHPUnit\Framework\TestCase;
 
 final class RequestFactoryTest extends TestCase
@@ -32,7 +32,7 @@ final class RequestFactoryTest extends TestCase
         $factory = new RequestFactory($config, new Md5Signer());
         $request = $factory->build('open.seller.order.list', ['page_no' => 1], 'access-token');
 
-        self::assertSame('https://openapi.kwaixiaodian.com', $request['url']);
+        self::assertSame('https://openapi.kwaixiaodian.com/open/seller/order/list', $request['url']);
         self::assertSame('ks123', $request['params']['appkey']);
         self::assertSame('open.seller.order.list', $request['params']['method']);
         self::assertSame('1', $request['params']['version']);

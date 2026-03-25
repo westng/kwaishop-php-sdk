@@ -70,23 +70,24 @@ src/
 │   ├── Tool/               # Tooling capability APIs
 │   ├── User/               # User / seller info APIs
 │   └── Virtual/            # Virtual goods APIs
-├── Core/                   # SDK core infrastructure
-│   ├── Auth/               # OAuth and token objects
-│   ├── Http/               # HTTP transport abstraction and Guzzle implementation
-│   ├── Pipeline/           # Request building and response parsing pipeline
-│   ├── Profile/            # Config objects and runtime options
-│   ├── Runtime/            # FPM / CLI / Swoole runtime detection
-│   └── Signing/            # MD5 / HMAC_SHA256 signing implementations
+├── Auth/                   # OAuth and token objects
+├── Client/                 # Main SDK client, request primitives, and request pipeline
+│   └── Pipeline/           # Request building and response parsing pipeline
+├── Config/                 # Configuration objects
 ├── Exception/              # SDK exception hierarchy
+├── Generated/              # Auto-generated client method mappings
+├── Runtime/                # FPM / CLI / Swoole runtime detection
+├── Signing/                # MD5 / HMAC_SHA256 signing implementations
 ├── Support/                # Shared utility helpers
-└── KwaiShopClient.php      # Main SDK client entry point
+└── Transport/              # HTTP transport abstraction and Guzzle implementation
 ```
 
 Notes:
 
 - `Api/*` is organized by official documentation category, making endpoint lookup easier
-- `Core/*` contains the shared SDK infrastructure such as signing, authentication, request building, and response parsing
-- `KwaiShopClient.php` is the unified entry point for SDK calls
+- `Client/*` contains the SDK entry point, request abstractions, and request pipeline
+- `Generated/*` contains auto-generated client method mappings
+- `KwaiShopClient` now lives at `KwaiShopSDK\Client\KwaiShopClient`
 - If you want to check whether an endpoint is already wrapped, look in the matching category directory first
 
 ## Installation
@@ -102,18 +103,15 @@ composer require westng/kwaishop-php-sdk
 
 declare(strict_types=1);
 
-use KwaiShopSDK\Core\Profile\Config;
 use KwaiShopSDK\Exception\KwaiShopException;
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Client\KwaiShopClient;
 
-$config = new Config(
-    appKey: 'your-app-key',
-    appSecret: 'your-app-secret',
-    signSecret: 'your-sign-secret',
-    accessToken: 'your-access-token',
+$client = KwaiShopClient::make(
+    'your-app-key',
+    'your-app-secret',
+    'your-sign-secret',
+    'your-access-token',
 );
-
-$client = new KwaiShopClient($config);
 
 try {
     $response = $client
@@ -145,30 +143,30 @@ This SDK is designed with both `FPM` and `Swoole Coroutine` runtimes in mind.
 ### Swoole Coroutine Example
 
 ```php
-use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Client\KwaiShopClient;
 use Swoole\Runtime;
 
 Runtime::enableCoroutine(true);
 
-$config = new Config(
-    appKey: 'your-app-key',
-    appSecret: 'your-app-secret',
-    signSecret: 'your-sign-secret',
+$client = KwaiShopClient::make(
+    'your-app-key',
+    'your-app-secret',
+    'your-sign-secret',
 );
-
-$client = new KwaiShopClient($config);
 ```
 
 If you explicitly do not want the SDK to adapt the runtime automatically, you can disable it:
 
 ```php
-$config = new Config(
+use KwaiShopSDK\Config\Config;
+use KwaiShopSDK\Client\KwaiShopClient;
+
+$client = new KwaiShopClient(new Config(
     appKey: 'your-app-key',
     appSecret: 'your-app-secret',
     signSecret: 'your-sign-secret',
     autoDetectRuntime: false,
-);
+));
 ```
 
 ## Authentication
@@ -255,6 +253,12 @@ Run the default suite:
 composer test
 ```
 
+After the run completes, an HTML test report is generated automatically at:
+
+```text
+test-report.html
+```
+
 Run unit tests:
 
 ```bash
@@ -262,12 +266,6 @@ Run unit tests:
 ```
 
 Run integration tests:
-
-```bash
-KWAISHOP_RUN_INTEGRATION_TESTS=1 ./vendor/bin/phpunit --testsuite integration
-```
-
-Or configure real credentials in `.env` first, then run:
 
 ```bash
 ./vendor/bin/phpunit --testsuite integration
@@ -294,8 +292,9 @@ composer cs-fix
 
 Notes:
 
-- Integration tests require explicitly enabling `KWAISHOP_RUN_INTEGRATION_TESTS=1`
+- `composer test` includes integration tests by default
 - Configure real test credentials in `.env` before running integration tests
+- `composer test` automatically generates the latest HTML test report
 
 ## License
 

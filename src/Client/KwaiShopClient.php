@@ -11,19 +11,20 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK;
+namespace KwaiShopSDK\Client;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
-use KwaiShopSDK\Core\Auth\OAuthClient;
-use KwaiShopSDK\Core\Http\GuzzleTransport;
-use KwaiShopSDK\Core\Http\TransportInterface;
-use KwaiShopSDK\Core\PendingRequest;
-use KwaiShopSDK\Core\Pipeline\RequestFactory;
-use KwaiShopSDK\Core\Pipeline\ResponseParser;
-use KwaiShopSDK\Core\Profile\Config;
-use KwaiShopSDK\Core\RpcRequest;
+use KwaiShopSDK\Auth\OAuthClient;
+use KwaiShopSDK\Transport\GuzzleTransport;
+use KwaiShopSDK\Transport\TransportInterface;
+use KwaiShopSDK\Client\PendingRequest;
+use KwaiShopSDK\Client\Pipeline\RequestFactory;
+use KwaiShopSDK\Client\Pipeline\ResponseParser;
+use KwaiShopSDK\Config\Config;
+use KwaiShopSDK\Client\RpcRequest;
 use KwaiShopSDK\Exception\ValidationException;
+use KwaiShopSDK\Generated\ApiClientMethods;
 
 final class KwaiShopClient
 {
@@ -40,6 +41,11 @@ final class KwaiShopClient
     private readonly ResponseParser $responseParser;
     private readonly OAuthClient $oauthClient;
 
+    /**
+     * Create a client from either a {@see Config} instance or direct credentials.
+     *
+     * @throws ValidationException
+     */
     public function __construct(
         Config|string $appKey,
         mixed $appSecret = null,
@@ -84,11 +90,13 @@ final class KwaiShopClient
         $this->oauthClient = new OAuthClient($this->config, $this->transport, $this->responseParser);
     }
 
+    /** Get the immutable runtime configuration for the client. */
     public function config(): Config
     {
         return $this->config;
     }
 
+    /** Create a client directly from raw credential values. */
     public static function make(
         string $appKey,
         ?string $appSecret,
@@ -113,11 +121,19 @@ final class KwaiShopClient
         );
     }
 
+    /** Get the OAuth helper bound to this client. */
     public function oauth(): OAuthClient
     {
         return $this->oauthClient;
     }
 
+    /**
+     * Resolve a generated API method into a pending request.
+     *
+     * @param array<int, mixed> $arguments
+     *
+     * @throws ValidationException
+     */
     public function __call(string $name, array $arguments): PendingRequest
     {
         if ($arguments !== []) {
@@ -132,6 +148,16 @@ final class KwaiShopClient
         return $this->createPendingRequest($className);
     }
 
+    /**
+     * Send a low-level gateway request without using a generated API class.
+     *
+     * @param array<string, mixed> $params
+     * @param array<string, mixed> $transportOptions
+     *
+     * @throws ValidationException
+     *
+     * @return array<string, mixed>
+     */
     public function rawRequest(
         string $method,
         array $params,
@@ -160,6 +186,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Send a plain GET request and parse the gateway response body.
+     *
      * @param array<string, scalar|null> $query
      * @param array<string, string> $headers
      * @param array<string, mixed> $options
@@ -175,6 +203,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Send a form-encoded POST request and parse the gateway response body.
+     *
      * @param array<string, scalar|null> $form
      * @param array<string, string> $headers
      * @param array<string, mixed> $options
@@ -193,6 +223,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Send a JSON POST request and parse the gateway response body.
+     *
      * @param array<string, scalar|null> $json
      * @param array<string, string> $headers
      * @param array<string, mixed> $options
@@ -211,6 +243,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Send a multipart POST request and parse the gateway response body.
+     *
      * @param list<array{name:string, contents:mixed, filename?:string, headers?:array<string, string>}> $multipart
      * @param array<string, string> $headers
      * @param array<string, mixed> $options
@@ -226,6 +260,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Send an HTTP request through the configured transport.
+     *
      * @param array<string, mixed> $options
      *
      * @return array<string, mixed>
@@ -238,7 +274,10 @@ final class KwaiShopClient
     }
 
     /**
+     * Dispatch the signed gateway payload using the configured body transport mode.
+     *
      * @param array<string, scalar|null> $params
+     * @param array<string, mixed> $transportOptions
      *
      * @return array<string, mixed>
      */
@@ -272,6 +311,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Create a pending request wrapper for a resolved RPC request class.
+     *
      * @param class-string<RpcRequest> $className
      */
     private function createPendingRequest(string $className): PendingRequest
@@ -280,8 +321,12 @@ final class KwaiShopClient
     }
 
     /**
+     * Forward an explicitly generated API method to the shared pending-request factory.
+     *
      * @param array<int, mixed> $arguments
      * @param class-string<RpcRequest> $className
+     *
+     * @throws ValidationException
      */
     private function forwardExplicitApiCall(string $method, array $arguments, string $className): PendingRequest
     {
@@ -296,6 +341,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Normalize constructor arguments when the first argument is already a config object.
+     *
      * @return array{
      *     config: Config,
      *     transport: ?TransportInterface,
@@ -337,6 +384,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Normalize constructor arguments when the client is created from raw credentials.
+     *
      * @return array{
      *     config: Config,
      *     transport: ?TransportInterface,
@@ -432,6 +481,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Convert scalar request parameters to a multipart payload.
+     *
      * @param array<string, scalar|null> $params
      *
      * @return list<array{name:string, contents:scalar}>
@@ -455,6 +506,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Extract request headers from arbitrary transport options.
+     *
      * @param array<string, mixed> $transportOptions
      *
      * @return array<string, string>
@@ -467,6 +520,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Merge explicit headers into the outgoing transport options array.
+     *
      * @param array<string, string> $headers
      * @param array<string, mixed> $options
      *
@@ -484,6 +539,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Return a copy of the options array without a given key.
+     *
      * @param array<string, mixed> $options
      *
      * @return array<string, mixed>
@@ -495,6 +552,7 @@ final class KwaiShopClient
         return $options;
     }
 
+    /** Normalize a content type value to its lowercase media type. */
     private function normalizeContentType(string $contentType): string
     {
         $mediaType = explode(';', strtolower(trim($contentType)), 2)[0] ?? '';
@@ -503,6 +561,8 @@ final class KwaiShopClient
     }
 
     /**
+     * Merge signed gateway fields into a user-provided multipart request body.
+     *
      * @param array<string, scalar|null> $gatewayParams
      * @param list<array{name:string, contents:mixed, filename?:string, headers?:array<string, string>}> $multipart
      *
@@ -548,6 +608,10 @@ final class KwaiShopClient
     }
 
     /**
+     * Resolve a dynamic API method name to its request class.
+     *
+     * @throws ValidationException
+     *
      * @return class-string<RpcRequest>
      */
     private function resolveApiClass(string $method): string
@@ -562,7 +626,7 @@ final class KwaiShopClient
             return $className;
         }
 
-        $matches = glob(__DIR__ . '/Api/*/' . $method . '.php') ?: [];
+        $matches = glob(dirname(__DIR__) . '/Api/*/' . $method . '.php') ?: [];
 
         if ($matches === []) {
             self::$apiClassMap[$method] = null;

@@ -11,7 +11,7 @@ declare(strict_types=1);
  * @license  https://github.com/westng/kwaishop-php-sdk/blob/main/LICENSE
  */
 
-namespace KwaiShopSDK\Core\Signing;
+namespace KwaiShopSDK\Signing;
 
 interface SignerInterface
 {

@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Core\Profile\Config;
+use KwaiShopSDK\Config\Config;
 use KwaiShopSDK\Exception\ValidationException;
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Client\KwaiShopClient;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
 use PHPUnit\Framework\TestCase;
 

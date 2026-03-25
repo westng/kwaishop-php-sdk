@@ -19,7 +19,11 @@ use KwaiShopSDK\Exception\ValidationException;
 final class Json
 {
     /**
+     * Encode an array into a JSON string for gateway transport.
+     *
      * @param array<string, mixed> $value
+     *
+     * @throws ValidationException
      */
     public static function encode(array $value): string
     {
@@ -31,6 +35,10 @@ final class Json
     }
 
     /**
+     * Decode a JSON response body into an associative array.
+     *
+     * @throws ValidationException
+     *
      * @return array<string, mixed>
      */
     public static function decode(string $value): array
@@ -39,7 +47,14 @@ final class Json
             /** @var array<string, mixed> $decoded */
             $decoded = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw new ValidationException('Failed to decode JSON response.', previous: $exception);
+            $snippet = trim(substr($value, 0, 200));
+            $message = 'Failed to decode JSON response.';
+
+            if ($snippet !== '') {
+                $message .= ' Response snippet: ' . $snippet;
+            }
+
+            throw new ValidationException($message, previous: $exception, rawResponseBody: $value);
         }
 
         return $decoded;

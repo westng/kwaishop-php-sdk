@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use KwaiShopSDK\Core\Pipeline\ResponseParser;
+use KwaiShopSDK\Client\Pipeline\ResponseParser;
 use KwaiShopSDK\Exception\AuthenticationException;
 use KwaiShopSDK\Exception\RateLimitException;
 use KwaiShopSDK\Exception\SignatureException;

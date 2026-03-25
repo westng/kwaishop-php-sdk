@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/bootstrap.php';
 
-use KwaiShopSDK\KwaiShopClient;
+use KwaiShopSDK\Client\KwaiShopClient;
 use KwaiShopSDK\Tests\Fixtures\TestConfigFactory;
 
 $usage = <<<'TEXT'

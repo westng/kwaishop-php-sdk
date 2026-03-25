@@ -16,6 +16,8 @@ namespace KwaiShopSDK\Support;
 final class Arr
 {
     /**
+     * Return the first existing value for a set of candidate keys.
+     *
      * @param array<string, mixed> $values
      * @param list<string> $keys
      */
@@ -31,6 +33,8 @@ final class Arr
     }
 
     /**
+     * Remove null values from an associative array.
+     *
      * @param array<string, mixed> $values
      *
      * @return array<string, mixed>
