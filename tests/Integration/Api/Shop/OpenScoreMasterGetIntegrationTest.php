@@ -13,17 +13,28 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Integration\Api\Shop;
 
-use PHPUnit\Framework\TestCase;
 use KwaiShopSDK\Api\Shop\OpenScoreMasterGet;
 use KwaiShopSDK\Core\Profile\Config;
 use KwaiShopSDK\Exception\TransportException;
 use KwaiShopSDK\KwaiShopClient;
 use KwaiShopSDK\Tests\Fixtures\TestConfigFactory;
+use PHPUnit\Framework\TestCase;
 
 final class OpenScoreMasterGetIntegrationTest extends TestCase
 {
     public function testExecutePrintsRealApiResponse(): void
     {
+        if (!TestConfigFactory::shouldRunIntegrationTests()) {
+            self::markTestSkipped('Set KWAISHOP_RUN_INTEGRATION_TESTS=1 to run real integration tests.');
+        }
+
+        if (!TestConfigFactory::hasIntegrationCredentials()) {
+            self::markTestSkipped(
+                'Missing required integration envs: KWAISHOP_TEST_APP_KEY, KWAISHOP_TEST_APP_SECRET, '
+                . 'KWAISHOP_TEST_SIGN_SECRET, KWAISHOP_TEST_ACCESS_TOKEN'
+            );
+        }
+
         $client = new KwaiShopClient(
             new Config(
                 appKey: TestConfigFactory::make()->appKey(),
@@ -33,14 +44,9 @@ final class OpenScoreMasterGetIntegrationTest extends TestCase
             )
         );
 
-        $accessToken = TestConfigFactory::accessToken();
-        if ($accessToken === null) {
-            self::markTestSkipped('Missing required env: KWAISHOP_TEST_ACCESS_TOKEN');
-        }
-
         $api = new OpenScoreMasterGet($client);
         try {
-            $response = $api->execute([], $accessToken);
+            $response = $api->execute([], TestConfigFactory::accessToken());
         } catch (TransportException $exception) {
             if (str_contains($exception->getMessage(), 'Could not resolve host')) {
                 self::markTestSkipped('Network/DNS unavailable for integration test in current environment.');

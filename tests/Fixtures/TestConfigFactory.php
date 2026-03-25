@@ -17,6 +17,19 @@ use KwaiShopSDK\Core\Profile\Config;
 
 final class TestConfigFactory
 {
+    public static function shouldRunIntegrationTests(): bool
+    {
+        return self::nullableEnv('KWAISHOP_RUN_INTEGRATION_TESTS') === '1';
+    }
+
+    public static function hasIntegrationCredentials(): bool
+    {
+        return self::nullableEnv('KWAISHOP_TEST_APP_KEY') !== null
+            && self::nullableEnv('KWAISHOP_TEST_APP_SECRET') !== null
+            && self::nullableEnv('KWAISHOP_TEST_SIGN_SECRET') !== null
+            && self::nullableEnv('KWAISHOP_TEST_ACCESS_TOKEN') !== null;
+    }
+
     public static function make(): Config
     {
         return new Config(
