@@ -14,20 +14,20 @@ declare(strict_types=1);
 namespace KwaiShopSDK\Tests\Unit;
 
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Psr7\Response;
-use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Psr7\Response;
 use KwaiShopSDK\Core\Http\GuzzleTransport;
 use KwaiShopSDK\Core\Profile\Config;
 use KwaiShopSDK\Core\Runtime\RuntimeProfile;
+use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 final class GuzzleTransportTest extends TestCase
 {
     public function testFpmRuntimeKeepsConnectionReuse(): void
     {
-        $httpClient = new class() implements ClientInterface {
+        $httpClient = new class () implements ClientInterface {
             public array $requests = [];
 
             public function send(RequestInterface $request, array $options = []): ResponseInterface
@@ -71,7 +71,7 @@ final class GuzzleTransportTest extends TestCase
 
     public function testSwooleRuntimeDisablesConnectionReuse(): void
     {
-        $httpClient = new class() implements ClientInterface {
+        $httpClient = new class () implements ClientInterface {
             public array $requests = [];
 
             public function send(RequestInterface $request, array $options = []): ResponseInterface

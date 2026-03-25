@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use KwaiShopSDK\Core\Profile\Config;
 use KwaiShopSDK\KwaiShopClient;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
+use PHPUnit\Framework\TestCase;
 
 final class KwaiShopClientHttpMethodsTest extends TestCase
 {

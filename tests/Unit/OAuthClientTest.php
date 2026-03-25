@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use KwaiShopSDK\Core\Auth\OAuthClient;
 use KwaiShopSDK\Core\Pipeline\ResponseParser;
 use KwaiShopSDK\Core\Profile\Config;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
+use PHPUnit\Framework\TestCase;
 
 final class OAuthClientTest extends TestCase
 {

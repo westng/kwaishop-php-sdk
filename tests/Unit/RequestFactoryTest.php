@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use KwaiShopSDK\Core\Pipeline\RequestFactory;
 use KwaiShopSDK\Core\Profile\Config;
 use KwaiShopSDK\Core\Signing\Md5Signer;
+use PHPUnit\Framework\TestCase;
 
 final class RequestFactoryTest extends TestCase
 {

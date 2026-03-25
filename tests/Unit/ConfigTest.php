@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use KwaiShopSDK\Core\Profile\Config;
 use KwaiShopSDK\Exception\ValidationException;
+use PHPUnit\Framework\TestCase;
 
 final class ConfigTest extends TestCase
 {

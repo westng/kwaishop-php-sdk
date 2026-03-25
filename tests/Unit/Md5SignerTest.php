@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
 use KwaiShopSDK\Core\Signing\Md5Signer;
+use PHPUnit\Framework\TestCase;
 
 final class Md5SignerTest extends TestCase
 {

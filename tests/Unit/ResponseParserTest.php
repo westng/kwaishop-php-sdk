@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
+use KwaiShopSDK\Core\Pipeline\ResponseParser;
 use KwaiShopSDK\Exception\RateLimitException;
 use KwaiShopSDK\Exception\SignatureException;
 use KwaiShopSDK\Exception\ValidationException;
-use KwaiShopSDK\Core\Pipeline\ResponseParser;
+use PHPUnit\Framework\TestCase;
 
 final class ResponseParserTest extends TestCase
 {

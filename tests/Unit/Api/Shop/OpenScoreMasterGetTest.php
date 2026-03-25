@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace KwaiShopSDK\Tests\Unit\Api\Shop;
 
-use PHPUnit\Framework\TestCase;
 use KwaiShopSDK\Api\Shop\OpenScoreMasterGet;
 use KwaiShopSDK\Core\Profile\Config;
 use KwaiShopSDK\KwaiShopClient;
 use KwaiShopSDK\Tests\Mock\FakeTransport;
+use PHPUnit\Framework\TestCase;
 
 final class OpenScoreMasterGetTest extends TestCase
 {
