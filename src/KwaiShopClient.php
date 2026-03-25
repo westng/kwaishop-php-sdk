@@ -17,14 +17,21 @@ use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use KwaiShopSDK\Core\Auth\OAuthClient;
 use KwaiShopSDK\Core\Http\GuzzleTransport;
+use KwaiShopSDK\Core\PendingRequest;
 use KwaiShopSDK\Core\Http\TransportInterface;
 use KwaiShopSDK\Core\Pipeline\RequestFactory;
 use KwaiShopSDK\Core\Pipeline\ResponseParser;
 use KwaiShopSDK\Core\Profile\Config;
+use KwaiShopSDK\Core\RpcRequest;
 use KwaiShopSDK\Exception\ValidationException;
 
 final class KwaiShopClient
 {
+    /**
+     * @var array<string, class-string<RpcRequest>|null>
+     */
+    private static array $apiClassMap = [];
+
     private readonly TransportInterface $transport;
     private readonly RequestFactory $requestFactory;
     private readonly ResponseParser $responseParser;
@@ -53,6 +60,20 @@ final class KwaiShopClient
         return $this->oauthClient;
     }
 
+    public function __call(string $name, array $arguments): PendingRequest
+    {
+        if ($arguments !== []) {
+            throw new ValidationException(sprintf(
+                'Dynamic API method [%s] does not accept constructor arguments.',
+                $name
+            ));
+        }
+
+        $className = $this->resolveApiClass($name);
+
+        return new PendingRequest(new $className($this));
+    }
+
     public function rawRequest(
         string $method,
         array $params,
@@ -62,6 +83,7 @@ final class KwaiShopClient
         string $contentType = 'application/x-www-form-urlencoded',
         array $transportOptions = [],
     ): array {
+        $accessToken ??= $this->config->accessToken();
         $request = $this->requestFactory->build($method, $params, $accessToken, $version);
 
         return match (strtoupper($httpMethod)) {
@@ -254,5 +276,44 @@ final class KwaiShopClient
         }
 
         return $parts;
+    }
+
+    /**
+     * @return class-string<RpcRequest>
+     */
+    private function resolveApiClass(string $method): string
+    {
+        if (array_key_exists($method, self::$apiClassMap)) {
+            $className = self::$apiClassMap[$method];
+
+            if ($className === null) {
+                throw new ValidationException(sprintf('Undefined API endpoint [%s].', $method));
+            }
+
+            return $className;
+        }
+
+        $matches = glob(__DIR__ . '/Api/*/' . $method . '.php') ?: [];
+
+        if ($matches === []) {
+            self::$apiClassMap[$method] = null;
+
+            throw new ValidationException(sprintf('Undefined API endpoint [%s].', $method));
+        }
+
+        if (count($matches) > 1) {
+            throw new ValidationException(sprintf('Ambiguous API endpoint [%s].', $method));
+        }
+
+        $category = basename(dirname($matches[0]));
+        $className = sprintf('KwaiShopSDK\\Api\\%s\\%s', $category, $method);
+
+        if (!class_exists($className)) {
+            throw new ValidationException(sprintf('API endpoint class [%s] could not be loaded.', $className));
+        }
+
+        self::$apiClassMap[$method] = $className;
+
+        return $className;
     }
 }

@@ -24,6 +24,7 @@ final class Config
         private readonly string $appKey,
         private readonly ?string $appSecret,
         private readonly string $signSecret,
+        private readonly ?string $accessToken = null,
         private readonly string $baseUrl = 'https://openapi.kwaixiaodian.com',
         private readonly string $oauthAuthorizeUrl = 'https://open.kwaixiaodian.com/oauth/authorize',
         private readonly string $oauthAccessTokenUrl = 'https://openapi.kwaixiaodian.com/oauth2/access_token',
@@ -39,6 +40,10 @@ final class Config
 
         if ($this->appSecret !== null && trim($this->appSecret) === '') {
             throw new ValidationException('appSecret cannot be blank when provided.');
+        }
+
+        if ($this->accessToken !== null && trim($this->accessToken) === '') {
+            throw new ValidationException('accessToken cannot be blank when provided.');
         }
 
         if (!in_array($this->signMethod, [self::SIGN_METHOD_MD5, self::SIGN_METHOD_HMAC_SHA256], true)) {
@@ -64,6 +69,7 @@ final class Config
             appKey: (string) ($config['appKey'] ?? ''),
             appSecret: isset($config['appSecret']) ? (string) $config['appSecret'] : null,
             signSecret: (string) ($config['signSecret'] ?? ''),
+            accessToken: isset($config['accessToken']) ? (string) $config['accessToken'] : null,
             baseUrl: (string) ($config['baseUrl'] ?? 'https://openapi.kwaixiaodian.com'),
             oauthAuthorizeUrl: (string) ($config['oauthAuthorizeUrl'] ?? 'https://open.kwaixiaodian.com/oauth/authorize'),
             oauthAccessTokenUrl: (string) ($config['oauthAccessTokenUrl'] ?? 'https://openapi.kwaixiaodian.com/oauth2/access_token'),
@@ -98,6 +104,11 @@ final class Config
     public function signSecret(): string
     {
         return $this->signSecret;
+    }
+
+    public function accessToken(): ?string
+    {
+        return $this->accessToken;
     }
 
     public function baseUrl(): string

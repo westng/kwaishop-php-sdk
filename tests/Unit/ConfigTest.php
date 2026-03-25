@@ -44,4 +44,16 @@ final class ConfigTest extends TestCase
         $this->expectException(ValidationException::class);
         $config->requiredAppSecret();
     }
+
+    public function testConfigAcceptsDefaultAccessToken(): void
+    {
+        $config = new Config(
+            appKey: 'ks123',
+            appSecret: 'secret',
+            signSecret: 'sign-secret',
+            accessToken: 'token-123'
+        );
+
+        self::assertSame('token-123', $config->accessToken());
+    }
 }
