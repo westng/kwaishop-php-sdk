@@ -264,6 +264,12 @@ composer test
 运行集成测试：
 
 ```bash
+KWAISHOP_RUN_INTEGRATION_TESTS=1 ./vendor/bin/phpunit --testsuite integration
+```
+
+或先在 `.env` 中配置真实凭据后执行：
+
+```bash
 ./vendor/bin/phpunit --testsuite integration
 ```
 
@@ -285,6 +291,11 @@ composer test
 composer cs-check
 composer cs-fix
 ```
+
+说明：
+
+- 集成测试默认需要显式开启 `KWAISHOP_RUN_INTEGRATION_TESTS=1`
+- 运行集成测试前请先在 `.env` 中配置真实的测试凭据
 
 ## 开源协议
 

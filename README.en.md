@@ -264,6 +264,12 @@ Run unit tests:
 Run integration tests:
 
 ```bash
+KWAISHOP_RUN_INTEGRATION_TESTS=1 ./vendor/bin/phpunit --testsuite integration
+```
+
+Or configure real credentials in `.env` first, then run:
+
+```bash
 ./vendor/bin/phpunit --testsuite integration
 ```
 
@@ -285,6 +291,11 @@ Code style checks:
 composer cs-check
 composer cs-fix
 ```
+
+Notes:
+
+- Integration tests require explicitly enabling `KWAISHOP_RUN_INTEGRATION_TESTS=1`
+- Configure real test credentials in `.env` before running integration tests
 
 ## License
 
