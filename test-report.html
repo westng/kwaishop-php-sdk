@@ -136,7 +136,7 @@
             <div class="header">
                 <div>
                     <h1>KwaiShopSDK 测试报告</h1>
-                    <div class="meta">生成时间：2026-03-25 08:57:04</div>
+                    <div class="meta">生成时间：2026-04-19 09:19:22</div>
                     <div class="meta">PHP 8.1.31 · PHPUnit 10.5.63 · 退出码 0</div>
                 </div>
                 <div class="status">通过（含空测试集）</div>
@@ -146,8 +146,8 @@
                 <div class="suite-card">
                 <div class="suite-label">单元测试</div>
                 <div class="suite-status suite-status-passed">通过</div>
-                <div class="suite-meta">用例数：35</div>
-                <div class="suite-meta">断言数：89</div>
+                <div class="suite-meta">用例数：36</div>
+                <div class="suite-meta">断言数：92</div>
                 <div class="suite-meta">跳过数：-</div>
             </div><div class="suite-card">
                 <div class="suite-label">集成测试</div>
@@ -170,8 +170,8 @@
                 <div class="section-meta">执行命令：<code>/Applications/MAMP/bin/php/php8.1.31/bin/php /Users/west/kwaishop-php-sdk/vendor/phpunit/phpunit/phpunit --configuration /Users/west/kwaishop-php-sdk/phpunit.xml --testsuite unit</code></div>
                 <div class="metric-row">
                     <span>退出码：0</span>
-                    <span>用例数：35</span>
-                    <span>断言数：89</span>
+                    <span>用例数：36</span>
+                    <span>断言数：92</span>
                     <span>跳过数：-</span>
                     <span>失败数：-</span>
                     <span>错误数：-</span>
@@ -181,11 +181,11 @@
 Runtime:       PHP 8.1.31
 Configuration: /Users/west/kwaishop-php-sdk/phpunit.xml
 
-...................................                               35 / 35 (100%)
+....................................                              36 / 36 (100%)
 
-Time: 00:00.035, Memory: 6.00 MB
+Time: 00:00.044, Memory: 6.00 MB
 
-OK (35 tests, 89 assertions)</pre>
+OK (36 tests, 92 assertions)</pre>
             </section><section class="suite-section">
                 <h2>集成测试</h2>
                 <div class="section-meta">PHPUnit 集成测试</div>
@@ -204,44 +204,10 @@ Runtime:       PHP 8.1.31
 Configuration: /Users/west/kwaishop-php-sdk/phpunit.xml
 
 OpenScoreMasterGet API Response
-{
-    &quot;result&quot;: 1,
-    &quot;msg&quot;: &quot;success&quot;,
-    &quot;error_msg&quot;: &quot;ok&quot;,
-    &quot;code&quot;: &quot;1&quot;,
-    &quot;data&quot;: {
-        &quot;summary&quot;: {
-            &quot;scoreStr&quot;: &quot;4.78&quot;,
-            &quot;showName&quot;: &quot;带货口碑分&quot;,
-            &quot;hasData&quot;: true
-        },
-        &quot;hasData&quot;: true,
-        &quot;scoreDim&quot;: [
-            {
-                &quot;dimName&quot;: &quot;内容力&quot;,
-                &quot;dimScoreStr&quot;: &quot;4.81&quot;
-            },
-            {
-                &quot;dimName&quot;: &quot;商品力&quot;,
-                &quot;dimScoreStr&quot;: &quot;4.77&quot;
-            },
-            {
-                &quot;dimName&quot;: &quot;勤奋力&quot;,
-                &quot;dimScoreStr&quot;: &quot;4.60&quot;
-            },
-            {
-                &quot;dimName&quot;: &quot;带货竞争力&quot;,
-                &quot;dimScoreStr&quot;: &quot;4.60&quot;
-            }
-        ]
-    },
-    &quot;requestId&quot;: &quot;774429024517495007&quot;,
-    &quot;sub_msg&quot;: &quot;ok&quot;,
-    &quot;sub_code&quot;: &quot;1&quot;
-}
+{&quot;result&quot;:28,&quot;code&quot;:&quot;803000&quot;,&quot;msg&quot;:&quot;鉴权失败&quot;,&quot;error_msg&quot;:&quot;TOKEN过期&quot;,&quot;sub_code&quot;:&quot;28&quot;,&quot;sub_msg&quot;:&quot;TOKEN过期&quot;,&quot;request_id&quot;:&quot;776590362845217844&quot;}
 .                                                                   1 / 1 (100%)
 
-Time: 00:00.274, Memory: 6.00 MB
+Time: 00:00.190, Memory: 6.00 MB
 
 OK (1 test, 1 assertion)</pre>
             </section><section class="suite-section">
@@ -268,39 +234,13 @@ No tests executed!</pre>
                     <h2>接口返回数据</h2>
                     <div class="section-meta">接口标识：open-score-master-get-integration</div>
                     <pre>{
-    &quot;result&quot;: 1,
-    &quot;msg&quot;: &quot;success&quot;,
-    &quot;error_msg&quot;: &quot;ok&quot;,
-    &quot;code&quot;: &quot;1&quot;,
-    &quot;data&quot;: {
-        &quot;summary&quot;: {
-            &quot;scoreStr&quot;: &quot;4.78&quot;,
-            &quot;showName&quot;: &quot;带货口碑分&quot;,
-            &quot;hasData&quot;: true
-        },
-        &quot;hasData&quot;: true,
-        &quot;scoreDim&quot;: [
-            {
-                &quot;dimName&quot;: &quot;内容力&quot;,
-                &quot;dimScoreStr&quot;: &quot;4.81&quot;
-            },
-            {
-                &quot;dimName&quot;: &quot;商品力&quot;,
-                &quot;dimScoreStr&quot;: &quot;4.77&quot;
-            },
-            {
-                &quot;dimName&quot;: &quot;勤奋力&quot;,
-                &quot;dimScoreStr&quot;: &quot;4.60&quot;
-            },
-            {
-                &quot;dimName&quot;: &quot;带货竞争力&quot;,
-                &quot;dimScoreStr&quot;: &quot;4.60&quot;
-            }
-        ]
-    },
-    &quot;requestId&quot;: &quot;774429024517495007&quot;,
-    &quot;sub_msg&quot;: &quot;ok&quot;,
-    &quot;sub_code&quot;: &quot;1&quot;
+    &quot;result&quot;: 28,
+    &quot;code&quot;: &quot;803000&quot;,
+    &quot;msg&quot;: &quot;鉴权失败&quot;,
+    &quot;error_msg&quot;: &quot;TOKEN过期&quot;,
+    &quot;sub_code&quot;: &quot;28&quot;,
+    &quot;sub_msg&quot;: &quot;TOKEN过期&quot;,
+    &quot;request_id&quot;: &quot;776590362845217844&quot;
 }</pre>
                 </section>
 
