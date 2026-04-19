@@ -293,6 +293,7 @@ The repository includes Chinese issue forms and automated issue comments with th
 
 - Use a conventional commit prefix in the commit message: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, or `chore`
 - The title should preferably follow the `type: subject` format, for example `feat: add open shop info api`
+- To trigger a major release, use `type!:` in the commit title or add `BREAKING CHANGE:` to the commit body
 - Keep each commit focused on one clear responsibility instead of mixing endpoint additions, refactors, and documentation changes together
 - Commit messages should describe the actual outcome of the change and should avoid vague descriptions such as `update` or `modify`
 - Do not commit `.env`, local cache files, IDE settings, or other temporary files unrelated to the SDK itself
@@ -305,6 +306,19 @@ The repository includes Chinese issue forms and automated issue comments with th
 - The Pull Request description should ideally mention what tests were run and whether code style checks were performed
 - Keep one Pull Request focused on one class of change instead of merging unrelated requirements together
 - Before opening a Pull Request, do a basic self-check on code style, naming, directory placement, and general usability
+
+### Release Flow
+
+- The repository now provides a manual GitHub Release workflow: open GitHub `Actions`, choose `Release`, and click `Run workflow`
+- Run releases from the default branch `main`; normal commits do not publish a release automatically
+- Keep `release_as` on the default `auto` in most cases: `feat` bumps the minor version, `BREAKING CHANGE:` or `type!:` bumps the major version, and all other commits fall back to a patch release
+- `initial_version` is only used when the repository has no `v*` tag yet, and the default first release is `v1.0.0`
+- Use `prerelease` to mark preview builds, and `dry_run` to preview the computed version without creating a tag or GitHub Release
+- Use `notes_en` and `notes_zh` to provide manual English and Chinese Release Notes in Markdown; if the Actions form is inconvenient for line breaks, enter literal `\n`
+- The Release title is always the resolved version number, for example `v1.2.3`
+- The Release Notes use a bilingual layout: each section gets an automatic version heading, the middle content comes from manual `notes_en` / `notes_zh` input, and the trailing `Contributors` / `贡献者` sections are generated automatically
+- `Contributors` are collected automatically from PR authors in the release range, or from commit authors when no PRs are found
+- If `notes_en` or `notes_zh` is left empty, the workflow falls back to an auto-generated change list
 
 ## Run Tests
 

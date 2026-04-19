@@ -293,6 +293,7 @@ $authorizeUrl = $oauth->buildAuthorizeUrl(
 
 - Commit Message 请使用规范前缀：`feat`、`fix`、`docs`、`style`、`refactor`、`test`、`chore`
 - 提交标题建议使用 `type: subject` 格式，例如 `feat: add open shop info api`
+- 需要触发大版本升级时，请在提交标题中使用 `type!:`，或在提交正文中写入 `BREAKING CHANGE:`
 - 一次提交只处理一个明确职责，避免把接口新增、重构、文档修改混在同一个提交里
 - 提交信息应直接说明本次改动结果，避免使用含糊描述，如“update”或“modify”
 - 不要提交 `.env`、本地缓存文件、IDE 配置或其他与功能无关的临时文件
@@ -305,6 +306,19 @@ $authorizeUrl = $oauth->buildAuthorizeUrl(
 - Pull Request 描述中建议说明已执行的测试范围，以及是否执行了代码风格检查
 - 一个 Pull Request 只解决一类问题，避免把多个不相关需求合并提交
 - 提交 Pull Request 前请先自查代码风格、命名、目录归类和基础可用性
+
+### 发布流程
+
+- 仓库已提供手动触发的 GitHub Release 工作流：进入 GitHub `Actions` 页面，选择 `Release` 后点击 `Run workflow`
+- 请在默认分支 `main` 上执行发布；工作流不会在日常提交时自动发版
+- `release_as` 建议保持默认 `auto`：`feat` 自动升级次版本，`BREAKING CHANGE:` 或 `type!:` 自动升级大版本，其余提交默认升级补丁版本
+- `initial_version` 仅在仓库还没有任何 `v*` tag 时生效，默认首个版本为 `v1.0.0`
+- `prerelease` 可用于标记预发布版本，`dry_run` 可先预览本次将生成的版本号而不真正创建 tag 和 Release
+- `notes_en` 与 `notes_zh` 用于手动填写英文/中文 Release Notes，支持 Markdown；如果 Actions 表单不方便换行，可使用字面量 `\n`
+- Release 标题固定为版本号，例如 `v1.2.3`
+- Release Notes 采用双语结构：每段顶部版本号自动生成，中间正文由 `notes_en` / `notes_zh` 手动填写，末尾 `Contributors` / `贡献者` 自动生成
+- `Contributors` 会自动汇总发版范围内的 PR 作者；如果没有 PR，则回退为提交作者
+- 如果未填写 `notes_en` 或 `notes_zh`，工作流会回退为自动汇总的变更列表
 
 ## 运行测试
 

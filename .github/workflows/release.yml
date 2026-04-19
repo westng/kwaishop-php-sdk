@@ -1,0 +1,391 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_as:
+        description: Release type override
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+      initial_version:
+        description: First release version if no tag exists
+        required: true
+        default: v1.0.0
+        type: string
+      prerelease:
+        description: Mark this release as prerelease
+        required: true
+        default: false
+        type: boolean
+      notes_en:
+        description: English release notes in Markdown, supports \n
+        required: false
+        default: ''
+        type: string
+      notes_zh:
+        description: Chinese release notes in Markdown, supports \n
+        required: false
+        default: ''
+        type: string
+      dry_run:
+        description: Preview only without creating tag or release
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure default branch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          default_branch="${{ github.event.repository.default_branch }}"
+
+          if [ "${GITHUB_REF_NAME}" != "${default_branch}" ]; then
+            echo "::error::This workflow only releases from ${default_branch}. Current branch: ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+
+      - name: Fetch tags
+        run: git fetch --force --tags origin
+
+      - name: Decide next version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_as="${{ inputs.release_as }}"
+          initial_version="${{ inputs.initial_version }}"
+          initial_version="${initial_version#v}"
+
+          if [[ ! "${initial_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::initial_version must look like v1.0.0 or 1.0.0"
+            exit 1
+          fi
+
+          last_tag="$(git tag --list 'v*' --sort=-v:refname | head -n 1 || true)"
+          should_release="true"
+          reason=""
+          bump="${release_as}"
+          next_version=""
+          commit_count=0
+
+          if [ -n "${last_tag}" ]; then
+            commit_count="$(git rev-list --count "${last_tag}..HEAD")"
+
+            if [ "${commit_count}" -eq 0 ]; then
+              should_release="false"
+              reason="No new commits since ${last_tag}."
+            fi
+          else
+            commit_count="$(git rev-list --count HEAD)"
+          fi
+
+          if [ "${should_release}" = "true" ]; then
+            if [ -z "${last_tag}" ]; then
+              next_version="v${initial_version}"
+              if [ "${release_as}" = "auto" ]; then
+                bump="initial"
+              fi
+              reason="No existing release tag found. Start from ${next_version}."
+            else
+              if [ "${release_as}" = "auto" ]; then
+                bump="patch"
+                has_minor="false"
+
+                while IFS= read -r -d '' record; do
+                  subject="${record%%$'\x1f'*}"
+                  body="${record#*$'\x1f'}"
+
+                  if printf '%s' "${subject}" | grep -Eq '^[^:]+!:'; then
+                    bump="major"
+                    break
+                  fi
+
+                  if printf '%s' "${body}" | grep -Eq '(^|[[:space:]])BREAKING CHANGE:'; then
+                    bump="major"
+                    break
+                  fi
+
+                  if printf '%s' "${subject}" | grep -Eq '^feat(\([^)]+\))?: '; then
+                    has_minor="true"
+                  fi
+                done < <(git log --format='%s%x1f%b%x00' "${last_tag}..HEAD")
+
+                if [ "${bump}" != "major" ] && [ "${has_minor}" = "true" ]; then
+                  bump="minor"
+                fi
+              fi
+
+              current_version="${last_tag#v}"
+              IFS='.' read -r major minor patch <<< "${current_version}"
+
+              case "${bump}" in
+                patch)
+                  patch=$((patch + 1))
+                  ;;
+                minor)
+                  minor=$((minor + 1))
+                  patch=0
+                  ;;
+                major)
+                  major=$((major + 1))
+                  minor=0
+                  patch=0
+                  ;;
+                *)
+                  echo "::error::Unsupported release bump: ${bump}"
+                  exit 1
+                  ;;
+              esac
+
+              next_version="v${major}.${minor}.${patch}"
+              reason="Calculated ${bump} release from ${last_tag} to ${next_version}."
+            fi
+          fi
+
+          {
+            echo "last_tag=${last_tag}"
+            echo "commit_count=${commit_count}"
+            echo "should_release=${should_release}"
+            echo "bump=${bump}"
+            echo "next_version=${next_version}"
+            echo "reason=${reason}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Show release plan
+        shell: bash
+        run: |
+          {
+            echo "## Release Plan"
+            echo ""
+            echo "- Branch: \`${GITHUB_REF_NAME}\`"
+            echo "- Last tag: \`${{ steps.version.outputs.last_tag || 'none' }}\`"
+            echo "- Commits since last tag: \`${{ steps.version.outputs.commit_count }}\`"
+            echo "- Release mode: \`${{ inputs.release_as }}\`"
+            echo "- Resolved bump: \`${{ steps.version.outputs.bump }}\`"
+            echo "- Next version: \`${{ steps.version.outputs.next_version || 'none' }}\`"
+            echo "- Prerelease: \`${{ inputs.prerelease }}\`"
+            echo "- Dry run: \`${{ inputs.dry_run }}\`"
+            echo ""
+            echo "${{ steps.version.outputs.reason }}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Stop when no release is needed
+        if: ${{ steps.version.outputs.should_release != 'true' }}
+        run: echo "${{ steps.version.outputs.reason }}"
+
+      - name: Build release notes
+        if: ${{ steps.version.outputs.should_release == 'true' }}
+        id: notes
+        uses: actions/github-script@v7
+        env:
+          LAST_TAG: ${{ steps.version.outputs.last_tag }}
+          NEXT_VERSION: ${{ steps.version.outputs.next_version }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          NOTES_EN: ${{ inputs.notes_en }}
+          NOTES_ZH: ${{ inputs.notes_zh }}
+        with:
+          script: |
+            const fs = require('fs');
+            const { execSync } = require('child_process');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const lastTag = process.env.LAST_TAG || '';
+            const nextVersion = process.env.NEXT_VERSION;
+            const defaultBranch = process.env.DEFAULT_BRANCH;
+            const rawNotesEn = process.env.NOTES_EN || '';
+            const rawNotesZh = process.env.NOTES_ZH || '';
+
+            const normalizeInput = (value) => {
+              return value
+                .replace(/\r\n/g, '\n')
+                .replace(/\\n/g, '\n')
+                .trim();
+            };
+
+            const notesEn = normalizeInput(rawNotesEn);
+            const notesZh = normalizeInput(rawNotesZh);
+
+            const range = lastTag ? `${lastTag}..HEAD` : 'HEAD';
+            const shas = execSync(`git log --format=%H ${range}`, { encoding: 'utf8' })
+              .trim()
+              .split('\n')
+              .filter(Boolean);
+
+            const pullRequests = new Map();
+
+            for (const sha of shas) {
+              const { data } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                owner,
+                repo,
+                commit_sha: sha,
+              });
+
+              for (const pr of data) {
+                if (!pr.merged_at) {
+                  continue;
+                }
+
+                if (pr.base?.ref !== defaultBranch) {
+                  continue;
+                }
+
+                if (!pullRequests.has(pr.number)) {
+                  pullRequests.set(pr.number, pr);
+                }
+              }
+            }
+
+            const orderedPullRequests = Array.from(pullRequests.values()).sort((left, right) => {
+              return new Date(left.merged_at).getTime() - new Date(right.merged_at).getTime();
+            });
+
+            const contributors = new Map();
+            const autoChangeLines = [];
+
+            if (orderedPullRequests.length > 0) {
+              for (const pr of orderedPullRequests) {
+                const login = pr.user?.login;
+
+                autoChangeLines.push(`- ${pr.title} by @${login} in #${pr.number}`);
+
+                if (login) {
+                  contributors.set(login, `@${login}`);
+                }
+              }
+            } else {
+              const commitLines = execSync(`git log --format=%H%x1f%s ${range}`, { encoding: 'utf8' })
+                .trim()
+                .split('\n')
+                .filter(Boolean);
+
+              for (const record of commitLines) {
+                const [sha, subject] = record.split('\u001f');
+                const { data } = await github.rest.repos.getCommit({
+                  owner,
+                  repo,
+                  ref: sha,
+                });
+
+                const login = data.author?.login;
+                const authorName = data.commit.author?.name;
+                const authorDisplay = login ? `@${login}` : authorName;
+
+                autoChangeLines.push(`- ${subject}${authorDisplay ? ` by ${authorDisplay}` : ''}`);
+
+                if (authorDisplay) {
+                  contributors.set(authorDisplay, authorDisplay);
+                }
+              }
+            }
+
+            const contributorLines = Array.from(contributors.values()).sort((left, right) => {
+              return left.localeCompare(right);
+            });
+
+            const englishBody = notesEn || [
+              'No manual English release notes were provided.',
+              '',
+              'Auto-detected changes:',
+              ...(autoChangeLines.length > 0 ? autoChangeLines : ['- No user-facing changes in this release']),
+            ].join('\n');
+
+            const chineseBody = notesZh || [
+              '未填写中文发布说明。',
+              '',
+              '自动识别到的变更：',
+              ...(autoChangeLines.length > 0 ? autoChangeLines : ['- 本次发布暂无用户可感知的变更']),
+            ].join('\n');
+
+            const markdown = [
+              `🚀 ${nextVersion}`,
+              '',
+              englishBody,
+              '',
+              '## Contributors',
+              ...(contributorLines.length > 0 ? contributorLines.map((line) => `- ${line}`) : ['- None']),
+              '',
+              '---',
+              '',
+              `🚀 ${nextVersion}`,
+              '',
+              chineseBody,
+              '',
+              '## 贡献者',
+              ...(contributorLines.length > 0 ? contributorLines.map((line) => `- ${line}`) : ['- 无']),
+              '',
+            ].join('\n');
+
+            const notesPath = '.github/release-notes.md';
+            fs.writeFileSync(notesPath, markdown, 'utf8');
+
+            core.setOutput('path', notesPath);
+            core.setOutput('preview', markdown);
+
+      - name: Preview release notes
+        if: ${{ steps.version.outputs.should_release == 'true' }}
+        shell: bash
+        run: |
+          {
+            echo ""
+            echo "## Release Notes Preview"
+            echo ""
+            cat "${{ steps.notes.outputs.path }}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Create and push tag
+        if: ${{ steps.version.outputs.should_release == 'true' && !inputs.dry_run }}
+        env:
+          TAG_NAME: ${{ steps.version.outputs.next_version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git rev-parse "${TAG_NAME}" >/dev/null 2>&1; then
+            echo "::error::Tag ${TAG_NAME} already exists."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG_NAME}" -m "Release ${TAG_NAME}"
+          git push origin "${TAG_NAME}"
+
+      - name: Create GitHub Release
+        if: ${{ steps.version.outputs.should_release == 'true' && !inputs.dry_run }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.next_version }}
+          name: ${{ steps.version.outputs.next_version }}
+          body_path: ${{ steps.notes.outputs.path }}
+          prerelease: ${{ inputs.prerelease }}
+
+      - name: Dry run result
+        if: ${{ steps.version.outputs.should_release == 'true' && inputs.dry_run }}
+        run: echo "Dry run completed. No tag or release was created."
